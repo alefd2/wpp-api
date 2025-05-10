@@ -1,0 +1,7 @@
+curl -X GET "https://graph.facebook.com/v19.0/oauth/access_token?grant_type=fb_exchange_token&client_id=1195822431721175&client_secret=d798febfecd75842168691f20d7aa7ae&fb_exchange_token=EAAQZCmBtB1tcBOwj3H4nbyZC95eYbNRZB8t4bWapxhDXNCZCz3bUl3QcEiVRdm9fMjGur4pBlcwNlul2vlZCG7pe9ZB4WlaiG8UOZCQ9jiAc9MPrZAoq0S05ZCXUZBvuftPErZA4ZBmZA0ETs4alEs4WnfqrYUHkizVFEWT38jmfQdzOhPANxZA4ELZBBqvaZCnCEohbNTCLt14m4NZCQK4MKKDZAQt3ll630ZD"
+
+curl -X GET "https://graph.facebook.com/v19.0/oauth/access_token?\
+grant_type=fb_exchange_token&\
+client_id=123456789012345&\
+client_secret=abc123appsecretxyz&\
+fb_exchange_token=EAAGw8Z...curto..."

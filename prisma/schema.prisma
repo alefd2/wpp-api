@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  ATTENDANT
+  SUPERVISOR
+}
+
+enum TicketStatus {
+  NEW
+  ASSIGNED
+  IN_PROGRESS
+  WAITING_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id              Int         @id @default(autoincrement())
+  name            String?
+  email           String?     @unique
+  password        String?
+  phone           String      @unique
+  role            UserRole    @default(ATTENDANT)
+  departmentId    Int?
+  department      Department? @relation(fields: [departmentId], references: [id])
+  assignedTickets Ticket[]    @relation("AssignedTo")
+  createdTickets  Ticket[]    @relation("CreatedBy")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Department {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  users       User[]
+  tickets     Ticket[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Ticket {
+  id            Int            @id @default(autoincrement())
+  title         String?
+  description   String?
+  status        TicketStatus   @default(NEW)
+  priority      TicketPriority @default(MEDIUM)
+  departmentId  Int?
+  department    Department?    @relation(fields: [departmentId], references: [id])
+  assignedToId  Int?
+  assignedTo    User?          @relation("AssignedTo", fields: [assignedToId], references: [id])
+  createdById   Int?
+  createdBy     User?          @relation("CreatedBy", fields: [createdById], references: [id])
+  customerPhone String?
+  messages      Message[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String
+  ticketId   Int?
+  ticket     Ticket?  @relation(fields: [ticketId], references: [id])
+  isFromUser Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

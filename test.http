@@ -1,0 +1,38 @@
+### Enviar mensagem
+POST http://localhost:3000/whatsapp/send
+Content-Type: application/json
+
+{
+    "to": "5585998546812",
+    "message": "Olá! alef falou!"
+}
+
+### Buscar chats de um usuário
+GET http://localhost:3000/whatsapp/chats/1
+
+### Teste do Webhook (simulando uma mensagem recebida do WhatsApp)
+POST http://localhost:3000/whatsapp/webhook
+Content-Type: application/json
+
+{
+    "object": "whatsapp_business_account",
+    "entry": [{
+        "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+        "changes": [{
+            "value": {
+                "messaging_product": "whatsapp",
+                "metadata": {
+                    "display_phone_number": "PHONE_NUMBER",
+                    "phone_number_id": "PHONE_NUMBER_ID"
+                },
+                "messages": [{
+                    "from": "5511999999999",
+                    "text": {
+                        "body": "Olá, esta é uma mensagem de teste!"
+                    }
+                }]
+            },
+            "field": "messages"
+        }]
+    }]
+} 
