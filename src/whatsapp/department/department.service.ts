@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from '../../prisma.service';
 
 @Injectable()
 export class DepartmentService {
@@ -58,6 +58,20 @@ export class DepartmentService {
       orderBy: {
         createdAt: 'desc',
       },
+    });
+  }
+
+  async assignMessageToDepartment(messageId: number, departmentId: number) {
+    return this.prisma.message.update({
+      where: { id: messageId },
+      data: { ticket: { update: { departmentId } } },
+    });
+  }
+
+  async getMessagesByDepartment(departmentId: number) {
+    return this.prisma.message.findMany({
+      where: { ticket: { departmentId } },
+      include: { ticket: true },
     });
   }
 }

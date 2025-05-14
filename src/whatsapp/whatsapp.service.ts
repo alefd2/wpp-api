@@ -148,4 +148,17 @@ export class WhatsappService {
       },
     });
   }
+
+  async getChats(userId: number) {
+    return this.prisma.ticket.findMany({
+      where: { createdById: userId },
+      include: {
+        messages: true,
+        assignedTo: true,
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+  }
 }

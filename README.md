@@ -198,3 +198,40 @@ GET /whatsapp/tickets/:id/messages
 3. Commit suas mudanças (`git commit -m 'Adiciona nova feature'`)
 4. Push para a branch (`git push origin feature/nova-feature`)
 5. Abra um Pull Request
+
+## Configuração do Webhook no Meta Developer Portal
+
+1. **Acesse o Meta Developer Portal**
+   - Entre em [Meta for Developers](https://developers.facebook.com)
+   - Vá para seu aplicativo WhatsApp Business
+
+2. **Configure o Webhook**
+   - No menu lateral, vá em "WhatsApp" > "Configuration"
+   - Em "Webhooks", clique em "Configure Webhook"
+   - Preencha os campos:
+     ```
+     Callback URL: https://seu-dominio.com/whatsapp/webhook
+     Verify Token: seu_verify_token_aqui (mesmo do .env)
+     ```
+   - Selecione os eventos que deseja receber:
+     - messages
+     - message_status
+     - message_template_status
+
+3. **Teste Local**
+   - Para desenvolvimento local, use ngrok:
+     ```bash
+     npx ngrok http 3000
+     ```
+   - Use a URL gerada pelo ngrok como Callback URL
+   - Exemplo: `https://abc123.ngrok.io/whatsapp/webhook`
+
+4. **Verificação**
+   - O Meta enviará uma requisição GET para verificar o webhook
+   - O sistema responderá automaticamente se o token estiver correto
+   - Após verificação, o Meta começará a enviar eventos
+
+5. **Monitoramento**
+   - No Meta Developer Portal, vá em "Webhooks" > "Debug"
+   - Aqui você pode ver todos os eventos recebidos
+   - Útil para debug e verificação do funcionamento

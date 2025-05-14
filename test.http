@@ -4,35 +4,41 @@ Content-Type: application/json
 
 {
     "to": "5585998546812",
-    "message": "Olá! alef falou!"
+    "message": "Alef Oliveira testando o envio de mensagem"
 }
 
-### Buscar chats de um usuário
-GET http://localhost:3000/whatsapp/chats/1
+### Verificar webhook
+GET http://localhost:3000/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=tokenAlef12345&hub.challenge=123456
 
-### Teste do Webhook (simulando uma mensagem recebida do WhatsApp)
+
+### Simular webhook (mensagem recebida)
 POST http://localhost:3000/whatsapp/webhook
 Content-Type: application/json
 
 {
     "object": "whatsapp_business_account",
     "entry": [{
-        "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+        "id": "123456789",
         "changes": [{
             "value": {
                 "messaging_product": "whatsapp",
                 "metadata": {
-                    "display_phone_number": "PHONE_NUMBER",
-                    "phone_number_id": "PHONE_NUMBER_ID"
+                    "display_phone_number": "5585998546812",
+                    "phone_number_id": "123456789"
                 },
                 "messages": [{
-                    "from": "5511999999999",
+                    "from": "5585998546812",
+                    "id": "wamid.123456789",
+                    "timestamp": "1234567890",
                     "text": {
-                        "body": "Olá, esta é uma mensagem de teste!"
-                    }
+                        "body": "Teste de mensagem"
+                    },
+                    "type": "text"
                 }]
-            },
-            "field": "messages"
+            }
         }]
     }]
-} 
+}
+
+### Buscar chats do usuário
+GET http://localhost:3000/whatsapp/chats/1 
