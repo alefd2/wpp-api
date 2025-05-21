@@ -9,7 +9,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { TicketService } from './ticket.service';
-import { TicketStatus, TicketPriority } from '@prisma/client';
+import { TicketStatus } from '@prisma/client';
 
 @Controller('whatsapp/tickets')
 export class TicketController {
@@ -21,7 +21,7 @@ export class TicketController {
     data: {
       title: string;
       description: string;
-      departmentId: number;
+      sectorId: number;
       customerPhone: string;
     },
     @Request() req,
@@ -53,22 +53,9 @@ export class TicketController {
     );
   }
 
-  @Put(':id/priority')
-  async updateTicketPriority(
-    @Param('id') id: string,
-    @Body('priority') priority: TicketPriority,
-    @Request() req,
-  ) {
-    return this.ticketService.updateTicketPriority(
-      Number(id),
-      priority,
-      req.user.id,
-    );
-  }
-
-  @Get('department/:departmentId')
-  async getTicketsByDepartment(@Param('departmentId') departmentId: string) {
-    return this.ticketService.getTicketsByDepartment(Number(departmentId));
+  @Get('sector/:sectorId')
+  async getTicketsBySector(@Param('sectorId') sectorId: string) {
+    return this.ticketService.getTicketsBySector(Number(sectorId));
   }
 
   @Get('my-tickets')

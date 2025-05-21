@@ -10,77 +10,175 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  ADMIN
-  ATTENDANT
-  SUPERVISOR
-}
+// 📦 Módulo de Cadastros
+model Company {
+  id        Int                @id @default(autoincrement())
+  name      String
+  users     User[]
+  clients   Client[]
+  templates ModelMetaMessage[]
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
 
-enum TicketStatus {
-  NEW
-  ASSIGNED
-  IN_PROGRESS
-  WAITING_CUSTOMER
-  RESOLVED
-  CLOSED
-}
-
-enum TicketPriority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
+  @@map("tb_company")
 }
 
 model User {
-  id              Int         @id @default(autoincrement())
-  name            String?
-  email           String?     @unique
-  password        String?
-  phone           String      @unique
-  role            UserRole    @default(ATTENDANT)
-  departmentId    Int?
-  department      Department? @relation(fields: [departmentId], references: [id])
-  assignedTickets Ticket[]    @relation("AssignedTo")
-  createdTickets  Ticket[]    @relation("CreatedBy")
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id            Int          @id @default(autoincrement())
+  name          String
+  email         String
+  password      String
+  phone         String
+  active        Boolean      @default(true)
+  sector        Sector       @relation(fields: [sectorId], references: [id])
+  sectorId      Int          @map("sector_id")
+  company       Company      @relation(fields: [companyId], references: [id])
+  companyId     Int          @map("company_id")
+  tickets       Ticket[]     @relation("AttendantTickets")
+  statusChanges StatusHist[]
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  @@map("tb_users")
 }
 
-model Department {
+model Client {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String?
+  phone     String?
+  active    Boolean  @default(true)
+  company   Company  @relation(fields: [companyId], references: [id])
+  companyId Int      @map("company_id")
+  tickets   Ticket[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("tb_clients")
+}
+
+model Sector {
   id          Int      @id @default(autoincrement())
-  name        String   @unique
+  name        String
   description String?
+  active      Boolean  @default(true)
   users       User[]
   tickets     Ticket[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("tb_sectors")
+}
+
+model ModelMetaMessage {
+  id          Int      @id @default(autoincrement())
+  name        String
+  category    String
+  language    String
+  contentJson Json     @map("content_json")
+  active      Boolean  @default(true)
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   Int      @map("company_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("tb_model_meta_messages")
+}
+
+// 🧩 Módulo de Processos
+enum TicketStatus {
+  OPEN
+  QUEUE
+  ONGOING
+  IDLE
+  FINISHED
+  CANCELED
 }
 
 model Ticket {
-  id            Int            @id @default(autoincrement())
-  title         String?
-  description   String?
-  status        TicketStatus   @default(NEW)
-  priority      TicketPriority @default(MEDIUM)
-  departmentId  Int?
-  department    Department?    @relation(fields: [departmentId], references: [id])
-  assignedToId  Int?
-  assignedTo    User?          @relation("AssignedTo", fields: [assignedToId], references: [id])
-  createdById   Int?
-  createdBy     User?          @relation("CreatedBy", fields: [createdById], references: [id])
-  customerPhone String?
+  id            Int          @id @default(autoincrement())
+  description   String
+  client        Client       @relation(fields: [clientId], references: [id])
+  clientId      Int          @map("client_id")
+  sector        Sector       @relation(fields: [sectorId], references: [id])
+  sectorId      Int          @map("sector_id")
+  status        TicketStatus
+  attendant     User?        @relation("AttendantTickets", fields: [attendantId], references: [id])
+  attendantId   Int?         @map("attendant_id")
+  startAt       DateTime?    @map("start_at")
+  endAt         DateTime?    @map("end_at")
   messages      Message[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  statusHistory StatusHist[]
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  @@map("tb_ticket")
+}
+
+model StatusHist {
+  id              Int          @id @default(autoincrement())
+  ticket          Ticket       @relation(fields: [ticketId], references: [id])
+  ticketId        Int          @map("ticket_id")
+  description     String?
+  status          TicketStatus
+  changedByUser   User         @relation(fields: [changedByUserId], references: [id])
+  changedByUserId Int          @map("changed_by_user_id")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@map("tb_status_hist")
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
 }
 
 model Message {
-  id         Int      @id @default(autoincrement())
-  content    String
-  ticketId   Int?
-  ticket     Ticket?  @relation(fields: [ticketId], references: [id])
-  isFromUser Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          Int                 @id @default(autoincrement())
+  ticket      Ticket              @relation(fields: [ticketId], references: [id])
+  ticketId    Int                 @map("ticket_id")
+  content     String
+  isFromUser  Boolean             @map("is_from_user")
+  wpId        String?             @map("wp_id")
+  wpStatus    MessageStatus?      @map("wp_status")
+  wpTimestamp DateTime?           @map("wp_timestamp")
+  attachments MessageAttachment[]
+  buttons     MessageButton[]
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  @@map("tb_message")
+}
+
+enum AttachmentType {
+  IMAGE
+  AUDIO
+  VIDEO
+  FILE
+}
+
+model MessageAttachment {
+  id        Int            @id @default(autoincrement())
+  message   Message        @relation(fields: [messageId], references: [id])
+  messageId Int            @map("message_id")
+  type      AttachmentType
+  url       String
+  mimeType  String         @map("mime_type")
+  caption   String?
+
+  @@map("tb_message_attachment")
+}
+
+model MessageButton {
+  id        Int     @id @default(autoincrement())
+  message   Message @relation(fields: [messageId], references: [id])
+  messageId Int     @map("message_id")
+  type      String
+  payload   String
+  text      String
+
+  @@map("tb_message_buttons")
 }

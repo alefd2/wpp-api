@@ -17,12 +17,13 @@ export class WhatsappController {
   @Post('send')
   async sendMessage(@Body() body: { to: string; message: string }) {
     try {
-      const result = await this.whatsappService.sendMessage(
+      const result = await this.whatsappService.sendTextMessage(
         body.to,
         body.message,
       );
       return { success: true, result };
     } catch (error) {
+      console.error('Erro ao enviar mensagem:', error);
       throw new HttpException(
         error.message || 'Failed to send message',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -42,6 +43,7 @@ export class WhatsappController {
     throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
   }
 
+  // teste
   @Post('webhook')
   async handleWebhook(@Body() body: any) {
     try {
@@ -113,4 +115,47 @@ export class WhatsappController {
       );
     }
   }
+
+  @Get('templates/:companyId')
+  async getTemplates(@Param('companyId') companyId: string) {
+    try {
+      const templates = await this.whatsappService.getTemplates(
+        Number(companyId),
+      );
+      return { success: true, templates };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to get templates',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('send-template')
+  async sendTemplate(@Body() data: SendTemplateData) {
+    try {
+      const object = {
+        to: data.to,
+        name: data.name,
+        companyId: data.companyId,
+        components: data.components,
+        language: data.language,
+      };
+      const result = await this.whatsappService.sendTemplateMessage(object);
+      return { success: true, result };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to send template message',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+}
+
+export interface SendTemplateData {
+  to: string;
+  name: string;
+  companyId: number;
+  components?: any[];
+  language?: string;
 }

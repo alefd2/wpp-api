@@ -1,44 +1,91 @@
-### Enviar mensagem
-POST http://localhost:3000/whatsapp/send
+### Variáveis
+@baseUrl = http://localhost:3000
+@phone = 5585998546812
+@companyId = 1
+
+### Enviar mensagem de texto
+POST {{baseUrl}}/whatsapp/send
 Content-Type: application/json
 
 {
-    "to": "5585998546812",
-    "message": "Alef Oliveira testando o envio de mensagem"
+    "to": "{{phone}}",
+    "message": "Olá! Esta é uma mensagem de teste."
 }
 
-### Verificar webhook
-GET http://localhost:3000/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=tokenAlef12345&hub.challenge=123456
+### Enviar mensagem de template simples
+POST {{baseUrl}}/whatsapp/send-template
+Content-Type: application/json
 
+{
+    "to": "{{phone}}",
+    "name": "hello_world",
+    "companyId": {{ companyId }},
+    "language": "en_US"
+}
 
-### Simular webhook (mensagem recebida)
-POST http://localhost:3000/whatsapp/webhook
+### Enviar mensagem de template com parâmetros
+POST {{baseUrl}}/whatsapp/send-template
+Content-Type: application/json
+
+{
+    "to": "{{phone}}",
+    "name": "welcome_user",
+    "companyId": {{ companyId }},
+    "language": "pt_BR",
+    "components": [
+        {
+            "type": "body",
+            "parameters": [
+                {
+                    "type": "text",
+                    "text": "João"
+                }
+            ]
+        }
+    ]
+}
+
+### Listar templates disponíveis
+GET {{baseUrl}}/whatsapp/templates/{{companyId}}
+
+### Listar chats de um usuário
+GET {{baseUrl}}/whatsapp/chats/1
+
+### Webhook de verificação (simulação)
+GET {{baseUrl}}/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=seu_token_aqui&hub.challenge=1234567890
+
+### Webhook de mensagem (exemplo de payload)
+POST {{baseUrl}}/whatsapp/webhook
 Content-Type: application/json
 
 {
     "object": "whatsapp_business_account",
-    "entry": [{
-        "id": "123456789",
-        "changes": [{
-            "value": {
-                "messaging_product": "whatsapp",
-                "metadata": {
-                    "display_phone_number": "5585998546812",
-                    "phone_number_id": "123456789"
-                },
-                "messages": [{
-                    "from": "5585998546812",
-                    "id": "wamid.123456789",
-                    "timestamp": "1234567890",
-                    "text": {
-                        "body": "Teste de mensagem"
+    "entry": [
+        {
+            "id": "WHATSAPP_BUSINESS_ACCOUNT_ID",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "5511999999999",
+                            "phone_number_id": "PHONE_NUMBER_ID"
+                        },
+                        "messages": [
+                            {
+                                "from": "{{phone}}",
+                                "id": "wamid.ID",
+                                "timestamp": "1234567890",
+                                "text": {
+                                    "body": "Olá, preciso de ajuda!"
+                                },
+                                "type": "text"
+                            }
+                        ]
                     },
-                    "type": "text"
-                }]
-            }
-        }]
-    }]
-}
-
-### Buscar chats do usuário
-GET http://localhost:3000/whatsapp/chats/1 
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+} 

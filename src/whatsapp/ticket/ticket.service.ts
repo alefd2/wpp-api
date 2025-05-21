@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
-import { TicketStatus, TicketPriority } from '@prisma/client';
+import { TicketStatus } from '@prisma/client';
 
 @Injectable()
 export class TicketService {
@@ -13,27 +13,42 @@ export class TicketService {
   async createTicket(data: {
     title: string;
     description: string;
-    departmentId: number;
+    sectorId: number;
     customerPhone: string;
     createdById: number;
   }) {
+    // Find or create client first
+    const client =
+      (await this.prisma.client.findFirst({
+        where: { phone: data.customerPhone },
+      })) ||
+      (await this.prisma.client.create({
+        data: {
+          name: 'Unknown',
+          phone: data.customerPhone,
+          companyId: 1,
+          active: true,
+        },
+      }));
+
     return this.prisma.ticket.create({
       data: {
         ...data,
-        status: TicketStatus.NEW,
-        priority: TicketPriority.MEDIUM,
+        description: data.description,
+        clientId: client.id,
+        sectorId: data.sectorId,
+        status: TicketStatus.OPEN,
       },
       include: {
-        department: true,
-        createdBy: true,
+        sector: true,
       },
     });
   }
 
-  async assignTicket(ticketId: number, assignedToId: number) {
+  async assignTicket(ticketId: number, attendantId: number) {
     const ticket = await this.prisma.ticket.findUnique({
       where: { id: ticketId },
-      include: { assignedTo: true },
+      include: { attendant: true },
     });
 
     if (!ticket) {
@@ -43,13 +58,12 @@ export class TicketService {
     return this.prisma.ticket.update({
       where: { id: ticketId },
       data: {
-        assignedToId,
-        status: TicketStatus.ASSIGNED,
+        attendantId,
+        status: TicketStatus.OPEN,
       },
       include: {
-        department: true,
-        assignedTo: true,
-        createdBy: true,
+        sector: true,
+        attendant: true,
       },
     });
   }
@@ -61,14 +75,14 @@ export class TicketService {
   ) {
     const ticket = await this.prisma.ticket.findUnique({
       where: { id: ticketId },
-      include: { assignedTo: true },
+      include: { attendant: true },
     });
 
     if (!ticket) {
       throw new NotFoundException('Ticket not found');
     }
 
-    if (ticket.assignedToId !== userId) {
+    if (ticket.attendantId !== userId) {
       throw new UnauthorizedException('You are not assigned to this ticket');
     }
 
@@ -76,69 +90,37 @@ export class TicketService {
       where: { id: ticketId },
       data: { status },
       include: {
-        department: true,
-        assignedTo: true,
-        createdBy: true,
+        sector: true,
+        attendant: true,
       },
     });
   }
 
-  async updateTicketPriority(
-    ticketId: number,
-    priority: TicketPriority,
-    userId: number,
-  ) {
-    const ticket = await this.prisma.ticket.findUnique({
-      where: { id: ticketId },
-      include: { assignedTo: true },
-    });
-
-    if (!ticket) {
-      throw new NotFoundException('Ticket not found');
-    }
-
-    if (ticket.assignedToId !== userId) {
-      throw new UnauthorizedException('You are not assigned to this ticket');
-    }
-
-    return this.prisma.ticket.update({
-      where: { id: ticketId },
-      data: { priority },
-      include: {
-        department: true,
-        assignedTo: true,
-        createdBy: true,
-      },
-    });
-  }
-
-  async getTicketsByDepartment(departmentId: number) {
+  async getTicketsBySector(sectorId: number) {
     return this.prisma.ticket.findMany({
-      where: { departmentId },
+      where: { sectorId },
       include: {
-        department: true,
-        assignedTo: true,
-        createdBy: true,
+        sector: true,
+        attendant: true,
         messages: {
           orderBy: { createdAt: 'desc' },
         },
       },
-      orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
+      orderBy: [{ createdAt: 'desc' }],
     });
   }
 
   async getTicketsByUser(userId: number) {
     return this.prisma.ticket.findMany({
-      where: { assignedToId: userId },
+      where: { attendantId: userId },
       include: {
-        department: true,
-        assignedTo: true,
-        createdBy: true,
+        sector: true,
+        attendant: true,
         messages: {
           orderBy: { createdAt: 'desc' },
         },
       },
-      orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
+      orderBy: [{ createdAt: 'desc' }],
     });
   }
 

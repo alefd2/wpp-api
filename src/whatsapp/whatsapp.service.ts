@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import axios from 'axios';
+import { MessageStatus, TicketStatus } from '@prisma/client';
+import { SendTemplateData } from './whatsapp.controller';
 
 @Injectable()
 export class WhatsappService {
@@ -25,16 +27,18 @@ export class WhatsappService {
     this.phoneNumberId = phoneNumberId;
   }
 
-  async sendMessage(to: string, message: string) {
+  async sendTextMessage(to: string, message: string) {
     try {
       const response = await axios.post(
         `${this.apiUrl}/${this.phoneNumberId}/messages`,
         {
           messaging_product: 'whatsapp',
-          recipient_type: 'individual',
           to,
           type: 'text',
-          text: { body: message },
+          text: {
+            preview_url: false,
+            body: message,
+          },
         },
         {
           headers: {
@@ -45,14 +49,16 @@ export class WhatsappService {
       );
 
       // Save message to database
-      const user = await this.findOrCreateUser(to);
-      const ticket = await this.findOrCreateTicket(user.id, to);
+      const client = await this.findOrCreateClient(to);
+      const ticket = await this.findOrCreateTicket(client.id);
 
       await this.prisma.message.create({
         data: {
           content: message,
           isFromUser: false,
           ticketId: ticket.id,
+          wpId: response.data.messages?.[0]?.id,
+          wpStatus: MessageStatus.SENT,
         },
       });
 
@@ -66,73 +72,177 @@ export class WhatsappService {
     }
   }
 
+  async sendTemplateMessage(data: SendTemplateData) {
+    try {
+      // Busca o template no banco
+      const savedTemplate = await this.getTemplateByName(
+        data.companyId,
+        data.name,
+      );
+      if (!savedTemplate) {
+        throw new Error(`Template ${data.name} not found`);
+      }
+
+      console.log(savedTemplate.language);
+      const response = await axios.post(
+        `${this.apiUrl}/${this.phoneNumberId}/messages`,
+        {
+          messaging_product: 'whatsapp',
+          to: data.to,
+          type: 'template',
+          template: {
+            name: data.name,
+            language: {
+              code: savedTemplate.language || 'pt_BR',
+            },
+            components: data.components,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      // Criar ou encontrar cliente
+      const client = await this.findOrCreateClient(data.to);
+      const ticket = await this.findOrCreateTicket(client.id);
+
+      // Salvar mensagem
+      await this.prisma.message.create({
+        data: {
+          content: data.name,
+          isFromUser: false,
+          ticketId: ticket.id,
+          wpId: response.data.messages?.[0]?.id,
+          wpStatus: MessageStatus.SENT,
+        },
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error(
+        'Error sending template message:',
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
+  }
+
   async handleWebhook(body: any) {
     try {
-      const entry = body.entry[0];
-      const changes = entry.changes[0];
-      const value = changes.value;
+      const entry = body.entry?.[0];
+      const changes = entry?.changes?.[0];
+      const value = changes?.value;
 
-      if (value.messages) {
+      if (value?.messages) {
         for (const message of value.messages) {
           const from = message.from;
+          const name = message.profile?.name || 'Unknown';
           const text = message.text?.body;
+          const wpId = message.id;
+          const wpTimestamp = new Date(Number(message.timestamp) * 1000);
 
-          if (text) {
-            // Save incoming message
-            const user = await this.findOrCreateUser(from);
-            const ticket = await this.findOrCreateTicket(user.id, from);
+          // Criar ou encontrar cliente
+          const client = await this.findOrCreateClient(from);
 
-            await this.prisma.message.create({
+          // Buscar ticket ativo ou criar novo
+          let ticket = await this.prisma.ticket.findFirst({
+            where: {
+              clientId: client.id,
+              status: { not: TicketStatus.FINISHED },
+            },
+          });
+
+          if (!ticket) {
+            // Criar novo ticket
+            ticket = await this.prisma.ticket.create({
               data: {
-                content: text,
-                isFromUser: true,
+                description: `Nova conversa com ${name}`,
+                clientId: client.id,
+                sectorId: 1, // Setor padrão
+                status: TicketStatus.OPEN,
+              },
+            });
+
+            // Criar histórico de status
+            await this.prisma.statusHist.create({
+              data: {
                 ticketId: ticket.id,
+                status: TicketStatus.OPEN,
+                description: 'Ticket criado automaticamente via WhatsApp',
+                changedByUserId: 1, // User sistema
               },
             });
           }
+
+          // Salvar a mensagem
+          await this.prisma.message.create({
+            data: {
+              ticketId: ticket.id,
+              content: text,
+              isFromUser: true,
+              wpId,
+              wpStatus: MessageStatus.DELIVERED,
+              wpTimestamp,
+            },
+          });
         }
       }
 
       return { success: true };
     } catch (error) {
-      console.error('Error handling webhook:', error);
+      console.error('Erro ao processar webhook:', error);
       throw error;
     }
   }
 
-  private async findOrCreateUser(phone: string) {
-    let user = await this.prisma.user.findUnique({
+  private async findOrCreateClient(phone: string) {
+    let client = await this.prisma.client.findFirst({
       where: { phone },
     });
 
-    if (!user) {
-      user = await this.prisma.user.create({
+    if (!client) {
+      client = await this.prisma.client.create({
         data: {
-          phone,
           name: 'Unknown',
-          email: `${phone}@placeholder.com`,
+          phone,
+          companyId: 1,
+          active: true,
         },
       });
     }
 
-    return user;
+    return client;
   }
 
-  private async findOrCreateTicket(userId: number, customerPhone: string) {
+  private async findOrCreateTicket(clientId: number) {
     let ticket = await this.prisma.ticket.findFirst({
       where: {
-        customerPhone,
-        status: { not: 'CLOSED' },
+        clientId,
+        status: { not: TicketStatus.FINISHED },
       },
     });
 
     if (!ticket) {
       ticket = await this.prisma.ticket.create({
         data: {
-          title: `Chat with ${customerPhone}`,
-          description: 'New conversation started',
-          customerPhone,
-          createdById: userId,
+          description: 'Nova conversa iniciada',
+          clientId,
+          sectorId: 1, // Setor padrão
+          status: TicketStatus.OPEN,
+        },
+      });
+
+      // Criar histórico de status
+      await this.prisma.statusHist.create({
+        data: {
+          ticketId: ticket.id,
+          status: TicketStatus.OPEN,
+          description: 'Ticket criado automaticamente',
+          changedByUserId: 1, // User sistema
         },
       });
     }
@@ -142,22 +252,47 @@ export class WhatsappService {
 
   async getTickets(userId: number) {
     return this.prisma.ticket.findMany({
-      where: { createdById: userId },
+      where: {
+        attendantId: userId,
+      },
       include: {
         messages: true,
+        client: true,
       },
     });
   }
 
   async getChats(userId: number) {
     return this.prisma.ticket.findMany({
-      where: { createdById: userId },
+      where: {
+        attendantId: userId,
+      },
       include: {
         messages: true,
-        assignedTo: true,
+        attendant: true,
+        client: true,
       },
       orderBy: {
         updatedAt: 'desc',
+      },
+    });
+  }
+
+  async getTemplates(companyId: number) {
+    return this.prisma.modelMetaMessage.findMany({
+      where: {
+        companyId,
+        active: true,
+      },
+    });
+  }
+
+  async getTemplateByName(companyId: number, name: string) {
+    return this.prisma.modelMetaMessage.findFirst({
+      where: {
+        companyId,
+        name,
+        active: true,
       },
     });
   }

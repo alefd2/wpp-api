@@ -1,6 +1,6 @@
 # WhatsApp API - Sistema de Atendimento
 
-Sistema de atendimento via WhatsApp com gerenciamento de tickets e departamentos.
+Sistema de atendimento via WhatsApp com gerenciamento de tickets e setores.
 
 ## Estrutura do Sistema
 
@@ -14,11 +14,11 @@ Sistema de atendimento via WhatsApp com gerenciamento de tickets e departamentos
     email: string
     phone: string
     role: UserRole
-    departmentId: number
+    sectorId: number
   }
   ```
 
-### 2. Departamentos (Department)
+### 2. Setores (Sector)
 - Agrupam usuários e tickets
 - **Campos**:
   ```typescript
@@ -43,7 +43,7 @@ Sistema de atendimento via WhatsApp com gerenciamento de tickets e departamentos
     description: string
     status: TicketStatus
     priority: TicketPriority
-    departmentId: number
+    sectorId: number
     assignedToId: number
     createdById: number
     customerPhone: string
@@ -72,7 +72,7 @@ Sistema de atendimento via WhatsApp com gerenciamento de tickets e departamentos
    - Mensagem é salva no ticket
 
 2. **Atendimento**
-   - Atendente vê tickets do departamento
+   - Atendente vê tickets do setor
    - Atendente se atribui ao ticket
    - Atendente atualiza status e prioridade
    - Atendente responde mensagens
@@ -87,7 +87,7 @@ Content-Type: application/json
 {
   "title": "Assunto do atendimento",
   "description": "Descrição detalhada",
-  "departmentId": 1,
+  "sectorId": 1,
   "customerPhone": "5511999999999"
 }
 ```
@@ -114,13 +114,13 @@ Content-Type: application/json
 GET /whatsapp/tickets/my-tickets
 ```
 
-### Departamentos
+### Setores
 ```http
-GET /whatsapp/departments
+GET /whatsapp/sectors
 ```
 
 ```http
-GET /whatsapp/departments/:id
+GET /whatsapp/sectors/:id
 ```
 
 ### Mensagens
@@ -189,7 +189,7 @@ GET /whatsapp/tickets/:id/messages
 - Autenticação via JWT
 - Roles baseadas em permissões
 - Validação de tokens WhatsApp
-- Proteção de rotas por departamento
+- Proteção de rotas por setor
 
 ## Contribuição
 
@@ -235,3 +235,51 @@ GET /whatsapp/tickets/:id/messages
    - No Meta Developer Portal, vá em "Webhooks" > "Debug"
    - Aqui você pode ver todos os eventos recebidos
    - Útil para debug e verificação do funcionamento
+
+# Banco de Dados
+
+## Migrações
+
+Para criar e aplicar novas migrações no banco de dados, siga os passos abaixo:
+
+1. Faça as alterações necessárias no arquivo `prisma/schema.prisma`
+
+2. Crie uma nova migração:
+```bash
+npx prisma migrate dev --name nome_da_migracao
+```
+
+Este comando irá:
+- Detectar as alterações no schema
+- Criar um novo arquivo de migração em `prisma/migrations`
+- Aplicar a migração no banco de dados
+- Regenerar o cliente Prisma
+
+3. Para ambientes de produção, use:
+```bash
+npx prisma migrate deploy
+```
+
+Este comando irá aplicar todas as migrações pendentes de forma segura.
+
+## Seed
+
+Para popular o banco com dados iniciais:
+
+```bash
+npx prisma db seed
+```
+
+Este comando irá criar:
+- Uma empresa demo
+- Um setor de atendimento
+- Um usuário administrador
+- Um template de mensagem de boas-vindas
+
+## Comandos Úteis
+
+- Visualizar o banco de dados: `npx prisma studio`
+- Verificar status das migrações: `npx prisma migrate status`
+- Resetar o banco de dados: `npx prisma migrate reset`
+- Validar o schema: `npx prisma validate`
+- Formatar o schema: `npx prisma format`
