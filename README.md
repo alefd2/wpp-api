@@ -283,3 +283,62 @@ Este comando irá criar:
 - Resetar o banco de dados: `npx prisma migrate reset`
 - Validar o schema: `npx prisma validate`
 - Formatar o schema: `npx prisma format`
+
+# WhatsApp Calendar API
+
+## Description
+
+API para gerenciamento de atendimentos via WhatsApp com integração com calendário.
+
+## Instalação
+
+```bash
+$ npm install
+```
+
+## Configuração do Banco de Dados
+
+```bash
+# Gerar o cliente do Prisma
+$ npm run prisma:generate
+
+# Executar as migrações
+$ npm run prisma:migrate
+
+# Popular o banco de dados
+$ npm run prisma:seed
+```
+
+## Executando a aplicação
+
+```bash
+# development
+$ npm run start
+
+# watch mode
+$ npm run start:dev
+
+# production mode
+$ npm run start:prod
+```
+
+## Testes
+
+```bash
+# unit tests
+$ npm run test
+
+# e2e tests
+$ npm run test:e2e
+
+# test coverage
+$ npm run test:cov
+```
+
+## Documentação da API
+
+A documentação da API está disponível em `/api/docs` quando a aplicação estiver em execução.
+
+## Licença
+
+[MIT licensed](LICENSE).

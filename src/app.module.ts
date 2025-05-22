@@ -1,12 +1,20 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { WhatsappModule } from './whatsapp/whatsapp.module';
-import { PrismaService } from './prisma.service';
+import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './modules/auth/auth.module';
+import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
+
+import { UserModule } from './modules/user/user.module';
 
 @Module({
-  imports: [WhatsappModule],
-  controllers: [AppController],
-  providers: [AppService, PrismaService],
+  imports: [
+    ConfigModule.forRoot(),
+    AuthModule,
+    WhatsappModule,
+    UserModule,
+    // CompanyModule,
+    // DepartmentModule,
+    // ContactModule,
+    // MessageModule,
+  ],
 })
 export class AppModule {}

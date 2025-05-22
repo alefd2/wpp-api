@@ -1,0 +1,125 @@
+### Variáveis
+@baseUrl = http://localhost:3000/api/v1
+@phone = 5585998546812
+@companyId = 1
+@token = 
+
+####################### Login com usuário admin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@admin.com",
+  "password": "123456"
+}
+
+### Salvar token da resposta
+@token = {{login.response.body.access_token}}
+
+### Listar usuários
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+### Buscar usuário por ID
+GET {{baseUrl}}/users/2
+Authorization: Bearer {{token}}
+
+### Criar novo usuário
+POST {{baseUrl}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Teste",
+  "email": "teste@teste.com",
+  "password": "123456",
+  "companyId": 1,
+  "active": true
+}
+
+### Atualizar usuário
+PATCH {{baseUrl}}/users/2
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Teste Atualizado",
+  "active": false
+}
+
+### Deletar usuário
+DELETE {{baseUrl}}/users/2
+Authorization: Bearer {{token}}
+
+### Buscar informações do usuário logado
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}} 
+
+
+### 1. Autenticar com Meta/Facebook e salvar credenciais
+POST {{baseUrl}}/whatsapp/auth?companyId={{companyId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "clientId": "1195822431721175",
+  "clientSecret": "d798febfecd75842168691f20d7aa7ae",
+  "fbExchangeToken": "EAAQZCmBtB1tcBOZBJXMw6krK1Gj2ce6bORfZC4w2ZC0N3mzVOmMZC1eIXxKTZC6uVIGdXoB4q47LmzarwOBbxHVl1bC8gZAqP1nH87OLuhLbNsQXgQtTAON3oOy0qwPZBf1ZATaCMFwT79OmqTEYpPkfGSrmnUoroIwK1EGoY8U2WG3rWE3wiD3z0eibltCeHKJqImHvfYMnmNoANcAZDZD"
+}
+
+### 2. Atualizar credenciais
+PATCH {{baseUrl}}/whatsapp/auth/1?companyId={{companyId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "clientId": "1195822431721175",
+  "clientSecret": "d798febfecd75842168691f20d7aa7ae",
+  "fbExchangeToken": "EAAQZCmBtB1tcBOZBJXMw6krK1Gj2ce6bORfZC4w2ZC0N3mzVOmMZC1eIXxKTZC6uVIGdXoB4q47LmzarwOBbxHVl1bC8gZAqP1nH87OLuhLbNsQXgQtTAON3oOy0qwPZBf1ZATaCMFwT79OmqTEYpPkfGSrmnUoroIwK1EGoY8U2WG3rWE3wiD3z0eibltCeHKJqImHvfYMnmNoANcAZDZD"
+}
+
+
+### 3. Listar histórico de autenticação
+GET {{baseUrl}}/whatsapp/auth/history?companyId={{companyId}}
+Authorization: Bearer {{token}}
+
+####################### Canais do WhatsApp #######################
+
+### 1. Criar novo canal
+POST {{baseUrl}}/whatsapp/channels
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Canal Principal",
+  "number": "15551489509",
+  "description": "Canal principal da empresa",
+  "companyId": {{companyId}},
+  "departmentId": 1,
+  "isDefault": true,
+  "whatsappCredentialId": 1,
+  "type": "WHATSAPP_CLOUD",
+  "fbNumberPhoneId": "622608514273316",
+  "accountWBId": "1515202096105724"
+}
+
+### 2. Listar todos os canais
+GET {{baseUrl}}/whatsapp/channels?companyId={{companyId}}
+Authorization: Bearer {{token}}
+
+### 3. Buscar canal específico
+GET {{baseUrl}}/whatsapp/channels/7?companyId={{companyId}}
+Authorization: Bearer {{token}}
+
+### 4. Conectar canal
+POST {{baseUrl}}/whatsapp/channels/7/connect?companyId={{companyId}}
+Authorization: Bearer {{token}}
+
+### 5. Desconectar canal
+POST {{baseUrl}}/whatsapp/channels/7/disconnect?companyId={{companyId}}
+Authorization: Bearer {{token}}
+
+### 6. Status do canal
+GET {{baseUrl}}/whatsapp/channels/7/status?companyId={{companyId}}
+Authorization: Bearer {{token}}

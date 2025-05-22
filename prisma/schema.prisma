@@ -11,174 +11,305 @@ datasource db {
 }
 
 // 📦 Módulo de Cadastros
-model Company {
-  id        Int                @id @default(autoincrement())
-  name      String
-  users     User[]
-  clients   Client[]
-  templates ModelMetaMessage[]
-  createdAt DateTime           @default(now()) @map("created_at")
-  updatedAt DateTime           @updatedAt @map("updated_at")
+model Plan {
+  id             Int       @id @default(autoincrement())
+  name           String
+  description    String?
+  price          Float
+  billingCycle   String    @map("billing_cycle")
+  maxUsers       Int       @map("max_users")
+  maxDepartments Int       @map("max_departments")
+  maxWhatsapp    Int       @map("max_whatsapp")
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  companies      Company[]
 
-  @@map("tb_company")
+  @@map("plans")
+}
+
+model Company {
+  id               Int                  @id @default(autoincrement())
+  name             String
+  planId           Int                  @map("plan_id")
+  active           Boolean              @default(true)
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+  plan             Plan                 @relation(fields: [planId], references: [id])
+  departments      Department[]
+  users            User[]
+  contacts         Contact[]
+  tickets          Ticket[]
+  channels         Channel[]
+  credentials      WhatsappCredential[] @relation("CompanyCredentials")
+  Whatsapp         Whatsapp[]
+  tags             Tag[]
+  quickResponses   QuickResponse[]
+  messageTemplates MessageTemplate[]
+
+  @@map("companies")
 }
 
 model User {
-  id            Int          @id @default(autoincrement())
-  name          String
-  email         String
-  password      String
-  phone         String
-  active        Boolean      @default(true)
-  sector        Sector       @relation(fields: [sectorId], references: [id])
-  sectorId      Int          @map("sector_id")
-  company       Company      @relation(fields: [companyId], references: [id])
-  companyId     Int          @map("company_id")
-  tickets       Ticket[]     @relation("AttendantTickets")
-  statusChanges StatusHist[]
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
+  id          Int              @id @default(autoincrement())
+  name        String
+  email       String           @unique
+  password    String
+  companyId   Int              @map("company_id")
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  company     Company          @relation(fields: [companyId], references: [id])
+  departments DepartmentUser[]
+  tickets     Ticket[]
+  messages    Message[]
+  sessions    Session[]
 
-  @@map("tb_users")
+  @@map("users")
 }
 
-model Client {
+model Department {
+  id            Int              @id @default(autoincrement())
+  name          String
+  companyId     Int              @map("company_id")
+  active        Boolean          @default(true)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  company       Company          @relation(fields: [companyId], references: [id])
+  users         DepartmentUser[]
+  businessHours BusinessHours[]
+  tickets       Ticket[]
+  Whatsapp      Whatsapp[]
+  Channel       Channel[]
+
+  @@map("departments")
+}
+
+model DepartmentUser {
+  id           Int        @id @default(autoincrement())
+  departmentId Int        @map("department_id")
+  userId       Int        @map("user_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  department   Department @relation(fields: [departmentId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
+
+  @@map("department_users")
+}
+
+model Contact {
   id        Int      @id @default(autoincrement())
   name      String
+  phone     String
   email     String?
-  phone     String?
-  active    Boolean  @default(true)
-  company   Company  @relation(fields: [companyId], references: [id])
   companyId Int      @map("company_id")
-  tickets   Ticket[]
+  active    Boolean  @default(true)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  company   Company  @relation(fields: [companyId], references: [id])
+  tickets   Ticket[]
 
-  @@map("tb_clients")
-}
-
-model Sector {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  active      Boolean  @default(true)
-  users       User[]
-  tickets     Ticket[]
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@map("tb_sectors")
-}
-
-model ModelMetaMessage {
-  id          Int      @id @default(autoincrement())
-  name        String
-  category    String
-  language    String
-  contentJson Json     @map("content_json")
-  active      Boolean  @default(true)
-  company     Company  @relation(fields: [companyId], references: [id])
-  companyId   Int      @map("company_id")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@map("tb_model_meta_messages")
-}
-
-// 🧩 Módulo de Processos
-enum TicketStatus {
-  OPEN
-  QUEUE
-  ONGOING
-  IDLE
-  FINISHED
-  CANCELED
+  @@map("contacts")
 }
 
 model Ticket {
-  id            Int          @id @default(autoincrement())
-  description   String
-  client        Client       @relation(fields: [clientId], references: [id])
-  clientId      Int          @map("client_id")
-  sector        Sector       @relation(fields: [sectorId], references: [id])
-  sectorId      Int          @map("sector_id")
-  status        TicketStatus
-  attendant     User?        @relation("AttendantTickets", fields: [attendantId], references: [id])
-  attendantId   Int?         @map("attendant_id")
-  startAt       DateTime?    @map("start_at")
-  endAt         DateTime?    @map("end_at")
-  messages      Message[]
-  statusHistory StatusHist[]
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
+  id           Int        @id @default(autoincrement())
+  protocol     String     @unique
+  status       String
+  priority     String
+  companyId    Int        @map("company_id")
+  departmentId Int        @map("department_id")
+  contactId    Int        @map("contact_id")
+  userId       Int?       @map("user_id")
+  channelId    Int?       @map("channel_id")
+  active       Boolean    @default(true)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  company      Company    @relation(fields: [companyId], references: [id])
+  department   Department @relation(fields: [departmentId], references: [id])
+  contact      Contact    @relation(fields: [contactId], references: [id])
+  user         User?      @relation(fields: [userId], references: [id])
+  channel      Channel?   @relation(fields: [channelId], references: [id])
+  messages     Message[]
+  Whatsapp     Whatsapp?  @relation(fields: [whatsappId], references: [id])
+  whatsappId   Int?
+  tags         Tag[]
 
-  @@map("tb_ticket")
-}
-
-model StatusHist {
-  id              Int          @id @default(autoincrement())
-  ticket          Ticket       @relation(fields: [ticketId], references: [id])
-  ticketId        Int          @map("ticket_id")
-  description     String?
-  status          TicketStatus
-  changedByUser   User         @relation(fields: [changedByUserId], references: [id])
-  changedByUserId Int          @map("changed_by_user_id")
-  createdAt       DateTime     @default(now()) @map("created_at")
-  updatedAt       DateTime     @updatedAt @map("updated_at")
-
-  @@map("tb_status_hist")
-}
-
-enum MessageStatus {
-  SENT
-  DELIVERED
-  READ
-  FAILED
+  @@map("tickets")
 }
 
 model Message {
-  id          Int                 @id @default(autoincrement())
-  ticket      Ticket              @relation(fields: [ticketId], references: [id])
-  ticketId    Int                 @map("ticket_id")
-  content     String
-  isFromUser  Boolean             @map("is_from_user")
-  wpId        String?             @map("wp_id")
-  wpStatus    MessageStatus?      @map("wp_status")
-  wpTimestamp DateTime?           @map("wp_timestamp")
-  attachments MessageAttachment[]
-  buttons     MessageButton[]
-  createdAt   DateTime            @default(now()) @map("created_at")
-  updatedAt   DateTime            @updatedAt @map("updated_at")
+  id         Int       @id @default(autoincrement())
+  messageId  String // ID da mensagem no WhatsApp
+  channelId  Int       @map("channel_id")
+  channel    Channel   @relation(fields: [channelId], references: [id])
+  from       String // Número do remetente
+  type       String // Tipo da mensagem (text, image, document, etc)
+  content    String // Conteúdo da mensagem (texto ou JSON com dados da mídia)
+  timestamp  DateTime // Timestamp da mensagem
+  status     String // Status da mensagem (RECEIVED, SENT, DELIVERED, READ, FAILED)
+  direction  String // Direção da mensagem (INBOUND, OUTBOUND)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  User       User?     @relation(fields: [userId], references: [id])
+  userId     Int?
+  Ticket     Ticket?   @relation(fields: [ticketId], references: [id])
+  ticketId   Int?
+  Whatsapp   Whatsapp? @relation(fields: [whatsappId], references: [id])
+  whatsappId Int?
 
-  @@map("tb_message")
+  @@index([channelId])
+  @@index([messageId])
 }
 
-enum AttachmentType {
-  IMAGE
-  AUDIO
-  VIDEO
-  FILE
+// Canais de comunicação
+model Channel {
+  id                   Int                 @id @default(autoincrement())
+  name                 String
+  number               String // Número de telefone
+  description          String?
+  type                 String // WHATSAPP_CLOUD, WHATSAPP_ON_PREMISE, SMS, etc
+  status               String              @default("DISCONNECTED")
+  session              String? // Dados da sessão em JSON
+  qrcode               String? // QR Code para conexão
+  fbNumberPhoneId      String? // ID do número de telefone no Facebook
+  accountWBId          String? // ID da conta do WhatsApp Business
+  isDefault            Boolean             @default(false)
+  active               Boolean             @default(true)
+  companyId            Int                 @map("company_id")
+  departmentId         Int?                @map("department_id")
+  whatsappCredentialId Int?                @map("whatsapp_credential_id")
+  company              Company             @relation(fields: [companyId], references: [id])
+  department           Department?         @relation(fields: [departmentId], references: [id])
+  credential           WhatsappCredential? @relation(fields: [whatsappCredentialId], references: [id])
+  messages             Message[]
+  tickets              Ticket[]
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+
+  @@index([companyId])
+  @@index([departmentId])
+  @@index([type])
+  @@index([number])
+  @@map("channels")
 }
 
-model MessageAttachment {
-  id        Int            @id @default(autoincrement())
-  message   Message        @relation(fields: [messageId], references: [id])
-  messageId Int            @map("message_id")
-  type      AttachmentType
-  url       String
-  mimeType  String         @map("mime_type")
-  caption   String?
+// Credenciais do Meta/Facebook
+model WhatsappCredential {
+  id              Int        @id @default(autoincrement())
+  clientId        String     @map("client_id")
+  clientSecret    String     @map("client_secret")
+  fbExchangeToken String?    @map("fb_exchange_token")
+  accessToken     String     @map("access_token")
+  tokenType       String     @default("bearer") @map("token_type")
+  expiresIn       Int?       @map("expires_in")
+  expiresAt       DateTime?  @map("expires_at")
+  active          Boolean    @default(true)
+  companyId       Int        @map("company_id")
+  company         Company    @relation("CompanyCredentials", fields: [companyId], references: [id], onDelete: Cascade)
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  Channel         Channel[]
+  Whatsapp        Whatsapp[]
 
-  @@map("tb_message_attachment")
+  @@index([companyId, active])
+  @@map("whatsapp_credentials")
 }
 
-model MessageButton {
-  id        Int     @id @default(autoincrement())
-  message   Message @relation(fields: [messageId], references: [id])
-  messageId Int     @map("message_id")
-  type      String
-  payload   String
-  text      String
+model Whatsapp {
+  id                   Int                 @id @default(autoincrement())
+  name                 String
+  number               String
+  description          String?
+  type                 String              @default("WHATSAPP_CLOUD")
+  status               String              @default("DISCONNECTED")
+  settings             Json? // Configurações não sensíveis
+  session              String?
+  qrcode               String?
+  active               Boolean             @default(true)
+  isDefault            Boolean             @default(false)
+  companyId            Int                 @map("company_id")
+  departmentId         Int?                @map("department_id")
+  company              Company             @relation(fields: [companyId], references: [id])
+  department           Department?         @relation(fields: [departmentId], references: [id])
+  messages             Message[]
+  tickets              Ticket[]
+  credential           WhatsappCredential? @relation(fields: [whatsappCredentialId], references: [id])
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+  whatsappCredentialId Int?
 
-  @@map("tb_message_buttons")
+  @@index([companyId])
+  @@index([departmentId])
+  @@index([type])
+  @@map("whatsapp")
+}
+
+model Session {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int      @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("sessions")
+}
+
+model BusinessHours {
+  id           Int        @id @default(autoincrement())
+  departmentId Int        @map("department_id")
+  dayOfWeek    Int        @map("day_of_week")
+  startTime    String     @map("start_time")
+  endTime      String     @map("end_time")
+  active       Boolean    @default(true)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  @@map("business_hours")
+}
+
+model Tag {
+  id        Int      @id @default(autoincrement())
+  name      String
+  color     String   @default("#666666")
+  companyId Int      @map("company_id")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  company   Company  @relation(fields: [companyId], references: [id])
+  tickets   Ticket[]
+
+  @@map("tags")
+}
+
+model QuickResponse {
+  id        Int      @id @default(autoincrement())
+  shortcut  String // Atalho para a resposta rápida (ex: #ola)
+  message   String // Mensagem completa
+  companyId Int      @map("company_id")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  company   Company  @relation(fields: [companyId], references: [id])
+
+  @@map("quick_responses")
+}
+
+model MessageTemplate {
+  id         Int      @id @default(autoincrement())
+  name       String // Nome do template
+  language   String // Idioma do template (ex: pt_BR)
+  category   String // Categoria do template (ex: MARKETING, UTILITY)
+  status     String // Status do template (APPROVED, PENDING, REJECTED)
+  components Json // Componentes do template em formato JSON
+  companyId  Int      @map("company_id")
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  company    Company  @relation(fields: [companyId], references: [id])
+
+  @@map("message_templates")
 }

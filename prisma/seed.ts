@@ -1,81 +1,121 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
+
 const prisma = new PrismaClient();
 
 async function main() {
   try {
-    // 1. Criar empresa
-    console.log('🏢 Criando empresa...');
-    const company = await prisma.company.create({
-      data: {
-        name: 'Empresa Demo',
-      },
-    });
-    console.log('✅ Empresa criada:', company);
-
-    // 2. Criar setor padrão
-    console.log('\n📋 Criando setor...');
-    const sector = await prisma.sector.create({
-      data: {
-        name: 'Atendimento Geral',
-        description: 'Setor padrão para atendimentos',
+    // Criar plano padrão
+    const defaultPlan = await prisma.plan.upsert({
+      where: { id: 1 },
+      update: {},
+      create: {
+        name: 'Plano Padrão',
+        description: 'Plano inicial do sistema',
+        price: 0,
+        billingCycle: 'MONTHLY',
+        maxUsers: 999999,
+        maxDepartments: 999999,
+        maxWhatsapp: 999999,
         active: true,
       },
     });
-    console.log('✅ Setor criado:', sector);
 
-    // 3. Criar usuário administrador
-    console.log('\n👤 Criando usuário admin...');
-    const admin = await prisma.user.create({
-      data: {
+    console.log('Plano padrão criado:', defaultPlan);
+
+    // Criar empresa padrão
+    const defaultCompany = await prisma.company.upsert({
+      where: { id: 1 },
+      update: {},
+      create: {
+        name: 'Empresa Padrão',
+        planId: defaultPlan.id,
+        active: true,
+      },
+    });
+
+    console.log('Empresa padrão criada:', defaultCompany);
+
+    // Criar departamento padrão
+    const defaultDepartment = await prisma.department.upsert({
+      where: { id: 1 },
+      update: {},
+      create: {
+        name: 'Geral',
+        companyId: defaultCompany.id,
+        active: true,
+      },
+    });
+
+    console.log('Departamento padrão criado:', defaultDepartment);
+
+    // Criar usuário admin
+    const hashedPassword = await bcrypt.hash('123456', 10);
+    const defaultUser = await prisma.user.upsert({
+      where: { email: 'admin@admin.com' },
+      update: {},
+      create: {
         name: 'Administrador',
-        email: 'admin@empresa.com',
-        password: 'admin',
-        phone: '5585999999999',
+        email: 'admin@admin.com',
+        password: hashedPassword,
+        companyId: defaultCompany.id,
         active: true,
-        sector: {
-          connect: {
-            id: sector.id,
-          },
-        },
-        company: {
-          connect: {
-            id: company.id,
-          },
-        },
       },
     });
-    console.log('✅ Admin criado:', admin);
 
-    // 4. Criar template de mensagem padrão
-    console.log('\n📝 Criando template de mensagem...');
-    const template = await prisma.modelMetaMessage.create({
+    console.log('Usuário admin criado:', defaultUser);
+
+    // Vincular usuário ao departamento
+    const departmentUser = await prisma.departmentUser.create({
       data: {
-        name: 'Mensagem de Boas-vindas',
-        category: 'welcome',
-        language: 'pt_BR',
-        contentJson: {
-          header: 'Bem-vindo ao Atendimento',
-          body: 'Olá {{1}}, como posso ajudar?',
-          footer: 'Atendimento Automático',
-        },
-        active: true,
-        company: {
-          connect: {
-            id: company.id,
-          },
-        },
+        userId: defaultUser.id,
+        departmentId: defaultDepartment.id,
       },
     });
-    console.log('✅ Template criado:', template);
 
-    console.log('\n🎉 Seed executado com sucesso!');
-    console.log('📊 Resumo:');
-    console.log('- Empresa ID:', company.id);
-    console.log('- Setor ID:', sector.id);
-    console.log('- Admin ID:', admin.id);
-    console.log('- Template ID:', template.id);
+    console.log('Vínculo usuário-departamento criado:', departmentUser);
+
+    // Criar configuração de horário comercial
+    const businessHours = await prisma.businessHours.create({
+      data: {
+        departmentId: defaultDepartment.id,
+        dayOfWeek: 1, // Segunda-feira
+        startTime: '09:00',
+        endTime: '18:00',
+        active: true,
+      },
+    });
+
+    // Criar horários para os outros dias da semana
+    const weekDays = [2, 3, 4, 5]; // Terça a Sexta
+    for (const day of weekDays) {
+      await prisma.businessHours.create({
+        data: {
+          departmentId: defaultDepartment.id,
+          dayOfWeek: day,
+          startTime: '09:00',
+          endTime: '18:00',
+          active: true,
+        },
+      });
+    }
+
+    // Sábado e Domingo (inativos)
+    for (const day of [6, 7]) {
+      await prisma.businessHours.create({
+        data: {
+          departmentId: defaultDepartment.id,
+          dayOfWeek: day,
+          startTime: '00:00',
+          endTime: '00:00',
+          active: false,
+        },
+      });
+    }
+
+    console.log('Horários comerciais criados:', businessHours);
   } catch (error) {
-    console.error('❌ Erro durante o seed:', error);
+    console.error('Erro durante o seed:', error);
     throw error;
   }
 }

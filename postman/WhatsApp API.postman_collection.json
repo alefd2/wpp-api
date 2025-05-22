@@ -1,0 +1,415 @@
+{
+  "info": {
+    "_postman_id": "f1b6fec7-3d92-4c62-8f1d-f11e07b0cae8",
+    "name": "WhatsApp API",
+    "description": "Collection for WhatsApp API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "0"
+  },
+  "event": [],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "companyId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@admin.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login to get access token"
+          },
+          "response": []
+        },
+        {
+          "name": "Me",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Get current user information"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Logout current user"
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints"
+    },
+    {
+      "name": "WhatsApp",
+      "item": [
+        {
+          "name": "1. Autenticação e Credenciais",
+          "item": [
+            {
+              "name": "Criar Credencial",
+              "event": [],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"clientId\": \"1195822431721175\",\n  \"clientSecret\": \"d798febfecd75842168691f20d7aa7ae\",\n  \"fbExchangeToken\": \"EAAQZCmBtB1tcBOZBJXMw6krK1Gj2ce6bORfZC4w2ZC0N3mzVOmMZC1eIXxKTZC6uVIGdXoB4q47LmzarwOBbxHVl1bC8gZAqP1nH87OLuhLbNsQXgQtTAON3oOy0qwPZBf1ZATaCMFwT79OmqTEYpPkfGSrmnUoroIwK1EGoY8U2WG3rWE3wiD3z0eibltCeHKJqImHvfYMnmNoANcAZDZD\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/whatsapp/auth?companyId={{companyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["whatsapp", "auth"],
+                  "query": [
+                    {
+                      "key": "companyId",
+                      "value": "{{companyId}}"
+                    }
+                  ]
+                },
+                "description": "Create new WhatsApp credential"
+              },
+              "response": []
+            },
+            {
+              "name": "Atualizar Credencial",
+              "event": [],
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"clientId\": \"1195822431721175\",\n  \"clientSecret\": \"d798febfecd75842168691f20d7aa7ae\",\n  \"fbExchangeToken\": \"EAAQZCmBtB1tcBOZBJXMw6krK1Gj2ce6bORfZC4w2ZC0N3mzVOmMZC1eIXxKTZC6uVIGdXoB4q47LmzarwOBbxHVl1bC8gZAqP1nH87OLuhLbNsQXgQtTAON3oOy0qwPZBf1ZATaCMFwT79OmqTEYpPkfGSrmnUoroIwK1EGoY8U2WG3rWE3wiD3z0eibltCeHKJqImHvfYMnmNoANcAZDZD\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/whatsapp/auth/1?companyId={{companyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["whatsapp", "auth", "1"],
+                  "query": [
+                    {
+                      "key": "companyId",
+                      "value": "{{companyId}}"
+                    }
+                  ]
+                },
+                "description": "Update existing WhatsApp credential"
+              },
+              "response": []
+            },
+            {
+              "name": "Histórico de Credenciais",
+              "event": [],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/whatsapp/auth/history?companyId={{companyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["whatsapp", "auth", "history"],
+                  "query": [
+                    {
+                      "key": "companyId",
+                      "value": "{{companyId}}"
+                    }
+                  ]
+                },
+                "description": "Get credentials history"
+              },
+              "response": []
+            }
+          ],
+          "description": "WhatsApp authentication and credentials management"
+        },
+        {
+          "name": "2. Canais",
+          "item": [
+            {
+              "name": "Criar Canal",
+              "event": [],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Canal Principal\",\n  \"number\": \"5511999999999\",\n  \"description\": \"Canal principal da empresa\",\n  \"companyId\": {{companyId}},\n  \"departmentId\": 1,\n  \"isDefault\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/whatsapp/channels",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["whatsapp", "channels"]
+                },
+                "description": "Create new WhatsApp channel"
+              },
+              "response": []
+            },
+            {
+              "name": "Listar Canais",
+              "event": [],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/whatsapp/channels?companyId={{companyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["whatsapp", "channels"],
+                  "query": [
+                    {
+                      "key": "companyId",
+                      "value": "{{companyId}}"
+                    }
+                  ]
+                },
+                "description": "List all channels"
+              },
+              "response": []
+            },
+            {
+              "name": "Obter Canal",
+              "event": [],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/whatsapp/channels/1?companyId={{companyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["whatsapp", "channels", "1"],
+                  "query": [
+                    {
+                      "key": "companyId",
+                      "value": "{{companyId}}"
+                    }
+                  ]
+                },
+                "description": "Get specific channel"
+              },
+              "response": []
+            }
+          ],
+          "description": "WhatsApp channels management"
+        },
+        {
+          "name": "3. Conexão",
+          "item": [
+            {
+              "name": "Conectar Canal",
+              "event": [],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/whatsapp/channels/1/connect?companyId={{companyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["whatsapp", "channels", "1", "connect"],
+                  "query": [
+                    {
+                      "key": "companyId",
+                      "value": "{{companyId}}"
+                    }
+                  ]
+                },
+                "description": "Connect channel to WhatsApp"
+              },
+              "response": []
+            },
+            {
+              "name": "Desconectar Canal",
+              "event": [],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/whatsapp/channels/1/disconnect?companyId={{companyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["whatsapp", "channels", "1", "disconnect"],
+                  "query": [
+                    {
+                      "key": "companyId",
+                      "value": "{{companyId}}"
+                    }
+                  ]
+                },
+                "description": "Disconnect channel from WhatsApp"
+              },
+              "response": []
+            },
+            {
+              "name": "Status do Canal",
+              "event": [],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/whatsapp/channels/1/status?companyId={{companyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["whatsapp", "channels", "1", "status"],
+                  "query": [
+                    {
+                      "key": "companyId",
+                      "value": "{{companyId}}"
+                    }
+                  ]
+                },
+                "description": "Get channel connection status"
+              },
+              "response": []
+            }
+          ],
+          "description": "WhatsApp connection management"
+        },
+        {
+          "name": "4. Mensagens",
+          "item": [
+            {
+              "name": "Enviar Mensagem",
+              "event": [],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"to\": \"5511999999999\",\n  \"type\": \"text\",\n  \"text\": \"Olá, esta é uma mensagem de teste!\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/whatsapp/channels/1/messages?companyId={{companyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["whatsapp", "channels", "1", "messages"],
+                  "query": [
+                    {
+                      "key": "companyId",
+                      "value": "{{companyId}}"
+                    }
+                  ]
+                },
+                "description": "Send message through WhatsApp"
+              },
+              "response": []
+            }
+          ],
+          "description": "WhatsApp messaging"
+        }
+      ],
+      "description": "WhatsApp related endpoints"
+    }
+  ]
+} 

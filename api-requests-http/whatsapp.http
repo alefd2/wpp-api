@@ -1,0 +1,61 @@
+### Variáveis
+
+@baseUrl = http://localhost:3000/api
+@companyId = 1
+
+####################### Login com usuário admin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@admin.com",
+  "password": "123456"
+}
+
+@token = {{login.response.body.access_token}}
+
+### 1. Autenticar com Meta/Facebook e salvar credenciais
+POST {{baseUrl}}/whatsapp/auth?companyId={{companyId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "clientId": "1195822431721175",
+  "clientSecret": "d798febfecd75842168691f20d7aa7ae",
+  "fbExchangeToken": "EAAQZCmBtB1tcBOZCLhRucZA0HQjaSlqBblDwFKVZAZARsrLH59ZCXj33WJJXyB6qQXw6XZBLv8zYAdYwPZBeYZBg8iqkmjChYekqagGhlYRhOGdMx7YPCNtiZAZA8S2NyxvdSnZAImSeqLGfBldYW4MlwhmvC4weHQWUXpEFqZADMZAoxHrZC5UZCZCdGiJeydMCiyoh8CoqDLZAuoAZBYhcUswAwfDSUphiEEc"
+}
+
+### 2. Criar um novo canal WhatsApp
+POST {{baseUrl}}/whatsapp/channels
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Canal Principal",
+  "number": "5511999999999",
+  "description": "Canal principal da empresa",
+  "companyId": {{companyId}},
+  "departmentId": 1,
+  "isDefault": true
+}
+
+### 3. Obter credenciais do canal
+GET {{baseUrl}}/whatsapp/channels/1/credentials?companyId={{companyId}}
+Authorization: Bearer {{token}}
+
+### 4. Conectar canal WhatsApp
+POST {{baseUrl}}/whatsapp/channels/1/connect?companyId={{companyId}}
+Authorization: Bearer {{token}}
+
+### 5. Verificar status do canal
+GET {{baseUrl}}/whatsapp/channels/1/status?companyId={{companyId}}
+Authorization: Bearer {{token}}
+
+### 6. Listar todos os canais da empresa
+GET {{baseUrl}}/whatsapp/channels?companyId={{companyId}}
+Authorization: Bearer {{token}}
+
+### 7. Desconectar canal
+POST {{baseUrl}}/whatsapp/channels/1/disconnect?companyId={{companyId}}
+Authorization: Bearer {{token}} 
