@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../../prisma.service';
+import { PrismaService } from 'src/prisma.service';
 import { Message } from '@prisma/client';
 
 @Injectable()
@@ -43,49 +43,74 @@ export class MessageService {
     });
   }
 
-  async getMessageStatus(messageId: string) {
-    const message = await this.prisma.message.findFirst({
-      where: { messageId },
-      select: {
-        id: true,
-        messageId: true,
-        status: true,
-        timestamp: true,
-        direction: true,
+  async findByPhone(phone: string, companyId: number) {
+    // Primeiro encontra o canal da empresa
+    const channel = await this.prisma.channel.findFirst({
+      where: {
+        companyId,
+        active: true,
       },
     });
 
-    if (!message) {
-      throw new NotFoundException(`Mensagem ${messageId} não encontrada`);
+    if (!channel) {
+      throw new NotFoundException('Canal não encontrado');
     }
 
-    return message;
-  }
-
-  async findByPhone(phone: string, companyId: number) {
+    // Busca todas as mensagens relacionadas a este número
     const messages = await this.prisma.message.findMany({
       where: {
-        from: phone,
-        channel: {
-          companyId,
-        },
+        channelId: channel.id,
+        OR: [
+          { from: phone }, // Mensagens recebidas deste número
+          {
+            AND: [
+              { direction: 'OUTBOUND' },
+              { from: phone }, // Mensagens enviadas para este número
+            ],
+          },
+        ],
       },
       orderBy: {
-        timestamp: 'desc',
+        timestamp: 'asc', // Ordem cronológica para exibição no chat
       },
       include: {
-        channel: {
+        User: {
           select: {
+            id: true,
             name: true,
-            number: true,
+          },
+        },
+        Ticket: {
+          select: {
+            id: true,
+            protocol: true,
+            status: true,
           },
         },
       },
     });
 
+    // Formata as mensagens para o frontend
     return messages.map((message) => ({
-      ...message,
+      id: message.id,
+      messageId: message.messageId,
+      type: message.type,
       content: this.parseMessageContent(message.content, message.type),
+      timestamp: message.timestamp,
+      status: message.status.toLowerCase(),
+      direction: message.direction.toLowerCase(),
+      sender: {
+        id: message.User?.id || null,
+        name: message.User?.name || null,
+        type: message.direction === 'INBOUND' ? 'customer' : 'agent',
+      },
+      ticket: message.Ticket
+        ? {
+            id: message.Ticket.id,
+            protocol: message.Ticket.protocol,
+            status: message.Ticket.status,
+          }
+        : null,
     }));
   }
 
@@ -194,7 +219,7 @@ export class MessageService {
 
     try {
       return JSON.parse(content);
-    } catch {
+    } catch (error) {
       return content;
     }
   }

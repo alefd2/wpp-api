@@ -87,45 +87,13 @@ export class WhatsappApiService implements ChannelProvider {
 
   async registerWebhook(url: string): Promise<any> {
     try {
-      // Primeiro, registra o app para receber notificações
-      const subscribeResponse = await this.api.post(
+      const response = await this.api.post(
         `/${this.phoneNumberId}/subscribed_apps`,
         {
           access_token: this.accessToken,
         },
       );
-
-      // Depois, configura os campos que queremos receber
-      const updateResponse = await this.api.post(
-        '/app/webhooks/setup',
-        {
-          object: 'whatsapp_business_account',
-          callback_url: url,
-          fields: [
-            'messages', // Mensagens recebidas
-            'status', // Status das mensagens (sent, delivered, read)
-            'conversation', // Atualizações de conversas (inclui status de leitura)
-            'message_template_status_update', // Status de templates
-          ],
-          include_values: true,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-
-      this.logger.log('Webhook configurado com sucesso:', {
-        subscribeResponse: subscribeResponse.data,
-        updateResponse: updateResponse.data,
-      });
-
-      return {
-        success: true,
-        subscribe: subscribeResponse.data,
-        update: updateResponse.data,
-      };
+      return response.data;
     } catch (error) {
       this.logger.error(
         'Error registering webhook:',

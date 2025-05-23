@@ -102,41 +102,6 @@ export class WhatsappMessageService {
     }
   }
 
-  async processInboundMessage(message: any, channelId: number) {
-    try {
-      const content = this.extractMessageContent(message);
-
-      return await this.prisma.message.create({
-        data: {
-          messageId: message.id,
-          channelId,
-          from: message.from,
-          type: message.type,
-          content,
-          timestamp: new Date(parseInt(message.timestamp) * 1000),
-          status: 'RECEIVED',
-          direction: 'INBOUND',
-        },
-      });
-    } catch (error) {
-      throw new Error(`Failed to process inbound message: ${error.message}`);
-    }
-  }
-
-  private extractMessageContent(message: any): string {
-    switch (message.type) {
-      case 'text':
-        return message.text?.body || '';
-      case 'image':
-      case 'document':
-      case 'audio':
-      case 'video':
-        return JSON.stringify(message[message.type]);
-      default:
-        return JSON.stringify(message);
-    }
-  }
-
   private validateMessageData(data: SendMessageDto) {
     switch (data.type) {
       case MessageType.TEXT:
@@ -249,6 +214,27 @@ export class WhatsappMessageService {
 
       default:
         return JSON.stringify(data);
+    }
+  }
+
+  async processInboundMessage(message: any, channelId: number) {
+    try {
+      const content = message.text?.body || JSON.stringify(message);
+      return await this.prisma.message.create({
+        data: {
+          messageId: message.id,
+          channelId,
+          from: message.from,
+          type: message.type,
+          content,
+          timestamp: new Date(parseInt(message.timestamp) * 1000),
+          status: 'RECEIVED',
+          direction: 'INBOUND',
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Failed to process inbound message: ${error.message}`);
+      throw error;
     }
   }
 }

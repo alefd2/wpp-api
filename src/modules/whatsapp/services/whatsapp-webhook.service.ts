@@ -54,10 +54,9 @@ export class WhatsappWebhookService {
         throw new NotFoundException(`Company ${companyId} not found`);
       }
 
-      // Log do payload completo para debug
       this.logger.debug(
-        'Webhook payload completo:',
-        JSON.stringify(data, null, 2),
+        `Processing webhook data for company ${companyId}:`,
+        data,
       );
 
       if (!data.entry || !data.entry.length) {
@@ -77,15 +76,8 @@ export class WhatsappWebhookService {
         for (const change of entry.changes) {
           const value = change.value;
 
-          // Log detalhado da mudança
-          this.logger.debug('Processando mudança:', {
-            field: change.field,
-            value: JSON.stringify(value, null, 2),
-          });
-
           // Processa atualizações de status
           if (value.statuses && value.statuses.length > 0) {
-            this.logger.debug('Status encontrados:', value.statuses);
             await this.processStatusUpdates(value.statuses);
             processedStatuses += value.statuses.length;
             this.logger.debug(
@@ -288,18 +280,11 @@ export class WhatsappWebhookService {
   private async processStatusUpdates(statuses: any[]) {
     for (const status of statuses) {
       try {
-        // Log detalhado do status recebido
-        this.logger.debug('Status bruto recebido:', {
-          status: JSON.stringify(status, null, 2),
-        });
-
         this.logger.debug('Processando status update:', {
           messageId: status.id,
           status: status.status,
           timestamp: status.timestamp,
           recipientId: status.recipient_id,
-          conversation: status.conversation,
-          pricing: status.pricing,
         });
 
         // Busca a mensagem no banco
@@ -325,7 +310,6 @@ export class WhatsappWebhookService {
           oldStatus: message.status,
           newStatus: mappedStatus,
           messageId: status.id,
-          rawStatus: status.status,
         });
 
         // Atualiza o status da mensagem
@@ -358,14 +342,7 @@ export class WhatsappWebhookService {
   }
 
   private mapWhatsAppStatus(whatsappStatus: string): string {
-    this.logger.debug('Mapeando status do WhatsApp:', {
-      originalStatus: whatsappStatus,
-    });
-
-    // Converte para lowercase para garantir o match
-    const status = whatsappStatus.toLowerCase();
-
-    switch (status) {
+    switch (whatsappStatus.toLowerCase()) {
       case 'sent':
         return 'SENT';
       case 'delivered':
@@ -374,14 +351,7 @@ export class WhatsappWebhookService {
         return 'READ';
       case 'failed':
         return 'FAILED';
-      case 'seen': // Alguns webhooks podem usar 'seen' em vez de 'read'
-        return 'READ';
-      case 'message_read': // Outro possível formato para status de leitura
-        return 'READ';
       default:
-        this.logger.warn(
-          `Status desconhecido recebido do WhatsApp: ${whatsappStatus}`,
-        );
         return 'PENDING';
     }
   }
