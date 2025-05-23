@@ -139,10 +139,59 @@ sequenceDiagram
 
 ## Status das Mensagens
 
-1. **SENT**: Mensagem enviada para a API do WhatsApp
-2. **DELIVERED**: Mensagem entregue ao destinatário
-3. **READ**: Mensagem lida pelo destinatário
-4. **FAILED**: Falha no envio da mensagem
+1. **PENDING**: Mensagem em processamento
+2. **SENT**: Mensagem enviada para a API do WhatsApp
+3. **DELIVERED**: Mensagem entregue ao destinatário
+4. **READ**: Mensagem lida pelo destinatário
+5. **FAILED**: Falha no envio da mensagem
+
+### Gerenciamento de Status de Leitura
+
+#### Marcar Mensagens Como Lidas
+```http
+POST /whatsapp/channels/:channelId/messages/mark-as-read
+```
+
+**Corpo da Requisição:**
+```json
+{
+  "phone": "5511999999999"
+}
+```
+
+**Resposta:**
+```json
+{
+  "success": true,
+  "updatedCount": 5,
+  "message": "5 mensagens marcadas como lidas"
+}
+```
+
+#### Consultar Mensagens Não Lidas
+```http
+GET /whatsapp/channels/:channelId/messages/unread-count?phone=5511999999999
+```
+
+**Resposta:**
+```json
+{
+  "unreadCount": 3
+}
+```
+
+### Fluxo de Status de Leitura
+
+```mermaid
+sequenceDiagram
+    Meta API->>Webhook: Mensagem recebida
+    Webhook->>WhatsappMessageService: processInboundMessage()
+    WhatsappMessageService->>Database: Salvar (status: RECEIVED)
+    Frontend->>MessageController: Abrir conversa
+    MessageController->>MessageService: markMessagesAsRead()
+    MessageService->>Database: Atualizar status para READ
+    MessageService-->>Frontend: Confirmação
+```
 
 ## Tratamento de Erros
 

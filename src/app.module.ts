@@ -10,6 +10,7 @@ import { UserModule } from './modules/user/user.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { TagModule } from './modules/tags/tag.module';
+import { DocsModule } from './modules/docs/docs.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { TagModule } from './modules/tags/tag.module';
     UserModule,
     ContactsModule,
     TagModule,
+    DocsModule,
   ],
   controllers: [AppController],
   providers: [
