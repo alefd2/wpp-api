@@ -8,6 +8,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { PrismaService } from '../../../prisma.service';
 import { WhatsappWebhookDto } from '../interfaces/webhook.interface';
+import { WhatsappMessageService } from './whatsapp-message.service';
 
 type WhatsAppMessage =
   WhatsappWebhookDto['entry'][0]['changes'][0]['value']['messages'][0];
@@ -19,6 +20,7 @@ export class WhatsappWebhookService {
   constructor(
     private readonly prisma: PrismaService,
     @InjectQueue('whatsapp-messages') private readonly messageQueue: Queue,
+    private readonly messageService: WhatsappMessageService,
   ) {}
 
   async verifyToken(token: string, companyId: number): Promise<void> {
@@ -52,9 +54,10 @@ export class WhatsappWebhookService {
         throw new NotFoundException(`Company ${companyId} not found`);
       }
 
+      // Log do payload completo para debug
       this.logger.debug(
-        `Processing webhook data for company ${companyId}:`,
-        data,
+        'Webhook payload completo:',
+        JSON.stringify(data, null, 2),
       );
 
       if (!data.entry || !data.entry.length) {
@@ -62,71 +65,52 @@ export class WhatsappWebhookService {
         return { processed: 0 };
       }
 
-      const results = await Promise.all(
-        data.entry.map(async (entry) => {
-          if (!entry.changes || !entry.changes.length) {
-            this.logger.warn(`No changes found in entry ${entry.id}`);
-            return null;
+      let processedMessages = 0;
+      let processedStatuses = 0;
+
+      for (const entry of data.entry) {
+        if (!entry.changes || !entry.changes.length) {
+          this.logger.warn(`No changes found in entry ${entry.id}`);
+          continue;
+        }
+
+        for (const change of entry.changes) {
+          const value = change.value;
+
+          // Log detalhado da mudança
+          this.logger.debug('Processando mudança:', {
+            field: change.field,
+            value: JSON.stringify(value, null, 2),
+          });
+
+          // Processa atualizações de status
+          if (value.statuses && value.statuses.length > 0) {
+            this.logger.debug('Status encontrados:', value.statuses);
+            await this.processStatusUpdates(value.statuses);
+            processedStatuses += value.statuses.length;
+            this.logger.debug(
+              `Processed ${value.statuses.length} status updates`,
+            );
           }
 
-          return Promise.all(
-            entry.changes.map(async (change) => {
-              if (
-                !change.value ||
-                !change.value.messages ||
-                !change.value.messages.length
-              ) {
-                this.logger.warn(
-                  `No messages found in change for entry ${entry.id}`,
-                );
-                return null;
-              }
-
-              // Queue each message for processing
-              const queuePromises = change.value.messages.map(
-                async (message) => {
-                  const jobData = {
-                    message,
-                    metadata: {
-                      businessPhoneNumber:
-                        change.value.metadata?.phone_number_id,
-                      displayPhoneNumber:
-                        change.value.metadata?.display_phone_number,
-                    },
-                    companyId,
-                  };
-
-                  this.logger.debug(
-                    `Queueing message for company ${companyId}:`,
-                    jobData,
-                  );
-
-                  await this.messageQueue.add('process-message', jobData, {
-                    attempts: 3,
-                    backoff: {
-                      type: 'exponential',
-                      delay: 2000,
-                    },
-                  });
-
-                  return message;
-                },
-              );
-
-              return Promise.all(queuePromises);
-            }),
-          );
-        }),
-      );
-
-      const flatResults = results.filter(Boolean).flat().filter(Boolean).flat();
+          // Processa mensagens recebidas
+          if (value.messages && value.messages.length > 0) {
+            await this.processMessages(value.messages);
+            processedMessages += value.messages.length;
+            this.logger.debug(`Processed ${value.messages.length} messages`);
+          }
+        }
+      }
 
       this.logger.log(
-        `Successfully queued ${flatResults.length} messages for company ${companyId}`,
+        `Successfully processed ${processedMessages} messages and ${processedStatuses} status updates for company ${companyId}`,
       );
 
       return {
-        processed: flatResults.length,
+        processed: {
+          messages: processedMessages,
+          statuses: processedStatuses,
+        },
       };
     } catch (error) {
       this.logger.error(
@@ -271,6 +255,159 @@ export class WhatsappWebhookService {
         error,
       );
       throw error;
+    }
+  }
+
+  async handleWebhook(body: any) {
+    try {
+      if (body.object !== 'whatsapp_business_account') {
+        return;
+      }
+
+      for (const entry of body.entry) {
+        for (const change of entry.changes) {
+          const value = change.value;
+
+          // Processa atualizações de status
+          if (value.statuses) {
+            await this.processStatusUpdates(value.statuses);
+          }
+
+          // Processa mensagens recebidas
+          if (value.messages) {
+            await this.processMessages(value.messages);
+          }
+        }
+      }
+    } catch (error) {
+      this.logger.error('Erro ao processar webhook:', error);
+      throw error;
+    }
+  }
+
+  private async processStatusUpdates(statuses: any[]) {
+    for (const status of statuses) {
+      try {
+        // Log detalhado do status recebido
+        this.logger.debug('Status bruto recebido:', {
+          status: JSON.stringify(status, null, 2),
+        });
+
+        this.logger.debug('Processando status update:', {
+          messageId: status.id,
+          status: status.status,
+          timestamp: status.timestamp,
+          recipientId: status.recipient_id,
+          conversation: status.conversation,
+          pricing: status.pricing,
+        });
+
+        // Busca a mensagem no banco
+        const message = await this.prisma.message.findFirst({
+          where: { messageId: status.id },
+        });
+
+        if (!message) {
+          this.logger.warn(
+            `Mensagem não encontrada para status update: ${status.id}`,
+            {
+              status: status.status,
+              recipientId: status.recipient_id,
+            },
+          );
+          continue;
+        }
+
+        // Mapeia o status do WhatsApp para nosso formato
+        const mappedStatus = this.mapWhatsAppStatus(status.status);
+
+        this.logger.debug(`Atualizando status da mensagem ${message.id}`, {
+          oldStatus: message.status,
+          newStatus: mappedStatus,
+          messageId: status.id,
+          rawStatus: status.status,
+        });
+
+        // Atualiza o status da mensagem
+        const updatedMessage = await this.prisma.message.update({
+          where: { id: message.id },
+          data: {
+            status: mappedStatus,
+            timestamp: new Date(Number(status.timestamp) * 1000),
+          },
+        });
+
+        this.logger.log(
+          `Status atualizado com sucesso: ${status.id} -> ${mappedStatus}`,
+          {
+            messageId: message.id,
+            oldStatus: message.status,
+            newStatus: mappedStatus,
+            timestamp: new Date(Number(status.timestamp) * 1000),
+          },
+        );
+      } catch (error) {
+        this.logger.error(`Erro ao processar status ${status.id}:`, {
+          error: error.message,
+          status: status.status,
+          recipientId: status.recipient_id,
+          stack: error.stack,
+        });
+      }
+    }
+  }
+
+  private mapWhatsAppStatus(whatsappStatus: string): string {
+    this.logger.debug('Mapeando status do WhatsApp:', {
+      originalStatus: whatsappStatus,
+    });
+
+    // Converte para lowercase para garantir o match
+    const status = whatsappStatus.toLowerCase();
+
+    switch (status) {
+      case 'sent':
+        return 'SENT';
+      case 'delivered':
+        return 'DELIVERED';
+      case 'read':
+        return 'READ';
+      case 'failed':
+        return 'FAILED';
+      case 'seen': // Alguns webhooks podem usar 'seen' em vez de 'read'
+        return 'READ';
+      case 'message_read': // Outro possível formato para status de leitura
+        return 'READ';
+      default:
+        this.logger.warn(
+          `Status desconhecido recebido do WhatsApp: ${whatsappStatus}`,
+        );
+        return 'PENDING';
+    }
+  }
+
+  private async processMessages(messages: any[]) {
+    for (const message of messages) {
+      try {
+        // Encontrar o canal pelo número do WhatsApp
+        const channel = await this.prisma.channel.findFirst({
+          where: {
+            fbNumberPhoneId: message.metadata?.phone_number_id,
+            type: 'WHATSAPP_CLOUD',
+            active: true,
+          },
+        });
+
+        if (!channel) {
+          this.logger.warn(`Canal não encontrado para mensagem ${message.id}`);
+          continue;
+        }
+
+        // Processa mensagem recebida
+        await this.messageService.processInboundMessage(message, channel.id);
+      } catch (error) {
+        this.logger.error(`Erro ao processar mensagem ${message.id}:`, error);
+      }
     }
   }
 }
