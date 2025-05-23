@@ -220,7 +220,9 @@ export class WhatsappMessageService {
   async processInboundMessage(message: any, channelId: number) {
     try {
       const content = message.text?.body || JSON.stringify(message);
-      return await this.prisma.message.create({
+
+      // Primeiro salva a mensagem como RECEIVED
+      const savedMessage = await this.prisma.message.create({
         data: {
           messageId: message.id,
           channelId,
@@ -232,6 +234,31 @@ export class WhatsappMessageService {
           direction: 'INBOUND',
         },
       });
+
+      this.logger.log(
+        `Mensagem ${message.id} recebida e salva com status RECEIVED`,
+      );
+
+      // Após um breve delay, atualiza para READ
+      setTimeout(async () => {
+        try {
+          await this.prisma.message.update({
+            where: { id: savedMessage.id },
+            data: {
+              status: 'READ',
+              timestamp: new Date(), // Atualiza o timestamp para quando foi lida
+            },
+          });
+          this.logger.log(`Mensagem ${message.id} atualizada para status READ`);
+        } catch (error) {
+          this.logger.error(
+            `Erro ao atualizar status para READ: ${message.id}`,
+            error,
+          );
+        }
+      }, 2000); // Delay de 2 segundos para simular o tempo de leitura
+
+      return savedMessage;
     } catch (error) {
       this.logger.error(`Failed to process inbound message: ${error.message}`);
       throw error;

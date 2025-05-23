@@ -223,4 +223,50 @@ export class MessageService {
       return content;
     }
   }
+
+  async markMessagesAsRead(channelId: number, phone: string) {
+    try {
+      // Atualiza todas as mensagens não lidas deste contato
+      const result = await this.prisma.message.updateMany({
+        where: {
+          channelId,
+          from: phone,
+          direction: 'INBOUND',
+          status: 'RECEIVED',
+        },
+        data: {
+          status: 'READ',
+          timestamp: new Date(), // Atualiza o timestamp para quando foi realmente lido
+        },
+      });
+
+      return {
+        success: true,
+        updatedCount: result.count,
+        message: `${result.count} mensagens marcadas como lidas`,
+      };
+    } catch (error) {
+      throw new Error(`Erro ao marcar mensagens como lidas: ${error.message}`);
+    }
+  }
+
+  async getUnreadCount(channelId: number, phone: string) {
+    try {
+      // Conta quantas mensagens não lidas existem deste contato
+      const count = await this.prisma.message.count({
+        where: {
+          channelId,
+          from: phone,
+          direction: 'INBOUND',
+          status: 'RECEIVED',
+        },
+      });
+
+      return {
+        unreadCount: count,
+      };
+    } catch (error) {
+      throw new Error(`Erro ao contar mensagens não lidas: ${error.message}`);
+    }
+  }
 }

@@ -252,4 +252,17 @@ Authorization: Bearer {{token}}
 
 ### Consultar mensagens por ticket
 GET {{baseUrl}}/whatsapp/messages/ticket/123?companyId={{companyId}}
+Authorization: Bearer {{token}}
+
+### Marcar mensagens como lidas
+POST {{baseUrl}}/whatsapp/channels/{{channelId}}/messages/mark-as-read
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "phone": "5511999999999"
+}
+
+### Consultar o número de mensagens não lidas
+GET {{baseUrl}}/whatsapp/channels/{{channelId}}/messages/unread-count?phone=5511999999999
 Authorization: Bearer {{token}} 

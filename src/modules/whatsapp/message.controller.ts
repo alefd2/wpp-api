@@ -1,10 +1,19 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  UseGuards,
+  Post,
+  Body,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,
   ApiOperation,
   ApiQuery,
   ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { MessageService } from './services/message.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -62,5 +71,35 @@ export class MessageController {
     @Query('companyId') companyId: string,
   ) {
     return this.messageService.findOne(+id, +companyId);
+  }
+
+  @Post(':channelId/messages/mark-as-read')
+  @ApiOperation({ summary: 'Marca mensagens recebidas como lidas' })
+  @ApiParam({ name: 'channelId', description: 'ID do canal' })
+  @ApiBody({
+    schema: {
+      properties: {
+        phone: { type: 'string', description: 'Número do telefone do contato' },
+      },
+    },
+  })
+  async markMessagesAsRead(
+    @Param('channelId') channelId: string,
+    @Body('phone') phone: string,
+  ) {
+    return this.messageService.markMessagesAsRead(parseInt(channelId), phone);
+  }
+
+  @Get(':channelId/messages/unread-count')
+  @ApiOperation({
+    summary: 'Retorna o número de mensagens não lidas de um contato',
+  })
+  @ApiParam({ name: 'channelId', description: 'ID do canal' })
+  @ApiQuery({ name: 'phone', description: 'Número do telefone do contato' })
+  async getUnreadCount(
+    @Param('channelId') channelId: string,
+    @Query('phone') phone: string,
+  ) {
+    return this.messageService.getUnreadCount(parseInt(channelId), phone);
   }
 }
