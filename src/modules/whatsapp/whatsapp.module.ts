@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bull';
+import { ConfigService } from '@nestjs/config';
 import { WhatsappController } from './whatsapp.controller';
 import { WhatsappService } from './whatsapp.service';
 import { WhatsappApiService } from './services/whatsapp-api.service';
@@ -9,9 +11,17 @@ import { ChannelFactoryService } from './services/channel-factory.service';
 import { ChannelService } from './services/channel.service';
 import { PrismaService } from '../../prisma.service';
 import { ChannelController } from './channel.controller';
+import { MessageService } from './services/message.service';
+import { MessageController } from './message.controller';
+import { WhatsappMessageProcessor } from './processors/whatsapp-message.processor';
 
 @Module({
-  controllers: [WhatsappController, ChannelController],
+  imports: [
+    BullModule.registerQueue({
+      name: 'whatsapp-messages',
+    }),
+  ],
+  controllers: [WhatsappController, ChannelController, MessageController],
   providers: [
     WhatsappService,
     WhatsappApiService,
@@ -20,8 +30,15 @@ import { ChannelController } from './channel.controller';
     WhatsappAuthService,
     ChannelFactoryService,
     ChannelService,
-    PrismaService
+    MessageService,
+    PrismaService,
+    WhatsappMessageProcessor,
   ],
-  exports: [WhatsappService, WhatsappMessageService, WhatsappWebhookService, WhatsappAuthService]
+  exports: [
+    WhatsappService,
+    WhatsappMessageService,
+    WhatsappWebhookService,
+    WhatsappAuthService,
+  ],
 })
-export class WhatsappModule {} 
+export class WhatsappModule {}

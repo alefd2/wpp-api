@@ -5,7 +5,7 @@ export abstract class BaseService<T> {
 
   abstract findAll(companyId: number): Promise<T[]>;
   abstract findOne(id: number, companyId: number): Promise<T>;
-  abstract create(data: any): Promise<T>;
+  abstract create(data: any & { companyId: number }): Promise<T>;
   abstract update(id: number, data: Partial<T>, companyId: number): Promise<T>;
   abstract delete(id: number, companyId: number): Promise<void>;
 

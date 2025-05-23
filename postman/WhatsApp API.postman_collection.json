@@ -1,21 +1,311 @@
 {
   "info": {
-    "_postman_id": "f1b6fec7-3d92-4c62-8f1d-f11e07b0cae8",
+    "_postman_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
     "name": "WhatsApp API",
-    "description": "Collection for WhatsApp API endpoints",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "0"
+    "description": "Coleção para testar a API de mensagens WhatsApp",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
-  "event": [],
+  "item": [
+    {
+      "name": "Mensagens",
+      "item": [
+        {
+          "name": "Enviar Mensagem de Texto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"5511999999999\",\n  \"type\": \"text\",\n  \"text\": \"Olá, como posso ajudar?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/whatsapp/channels/{{channelId}}/messages?companyId={{companyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["whatsapp", "channels", "{{channelId}}", "messages"],
+              "query": [
+                {
+                  "key": "companyId",
+                  "value": "{{companyId}}"
+                }
+              ]
+            },
+            "description": "Envia uma mensagem de texto via WhatsApp"
+          }
+        },
+        {
+          "name": "Enviar Imagem",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"5511999999999\",\n  \"type\": \"image\",\n  \"mediaUrl\": \"https://example.com/image.jpg\",\n  \"caption\": \"Foto do produto\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/whatsapp/channels/{{channelId}}/messages?companyId={{companyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["whatsapp", "channels", "{{channelId}}", "messages"],
+              "query": [
+                {
+                  "key": "companyId",
+                  "value": "{{companyId}}"
+                }
+              ]
+            },
+            "description": "Envia uma imagem via WhatsApp"
+          }
+        },
+        {
+          "name": "Enviar Documento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"5511999999999\",\n  \"type\": \"document\",\n  \"mediaUrl\": \"https://example.com/doc.pdf\",\n  \"filename\": \"contrato.pdf\",\n  \"caption\": \"Contrato de serviço\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/whatsapp/channels/{{channelId}}/messages?companyId={{companyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["whatsapp", "channels", "{{channelId}}", "messages"],
+              "query": [
+                {
+                  "key": "companyId",
+                  "value": "{{companyId}}"
+                }
+              ]
+            },
+            "description": "Envia um documento via WhatsApp"
+          }
+        },
+        {
+          "name": "Enviar Áudio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"5511999999999\",\n  \"type\": \"audio\",\n  \"mediaUrl\": \"https://example.com/audio.mp3\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/whatsapp/channels/{{channelId}}/messages?companyId={{companyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["whatsapp", "channels", "{{channelId}}", "messages"],
+              "query": [
+                {
+                  "key": "companyId",
+                  "value": "{{companyId}}"
+                }
+              ]
+            },
+            "description": "Envia um áudio via WhatsApp"
+          }
+        },
+        {
+          "name": "Enviar Vídeo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"5511999999999\",\n  \"type\": \"video\",\n  \"mediaUrl\": \"https://example.com/video.mp4\",\n  \"caption\": \"Tutorial do produto\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/whatsapp/channels/{{channelId}}/messages?companyId={{companyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["whatsapp", "channels", "{{channelId}}", "messages"],
+              "query": [
+                {
+                  "key": "companyId",
+                  "value": "{{companyId}}"
+                }
+              ]
+            },
+            "description": "Envia um vídeo via WhatsApp"
+          }
+        },
+        {
+          "name": "Buscar Mensagens por Telefone",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/whatsapp/messages/phone/5511999999999?companyId={{companyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["whatsapp", "messages", "phone", "5511999999999"],
+              "query": [
+                {
+                  "key": "companyId",
+                  "value": "{{companyId}}"
+                }
+              ]
+            },
+            "description": "Busca o histórico de mensagens por número de telefone"
+          }
+        },
+        {
+          "name": "Buscar Mensagem por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/whatsapp/messages/wamid.xxx123",
+              "host": ["{{baseUrl}}"],
+              "path": ["whatsapp", "messages", "wamid.xxx123"]
+            },
+            "description": "Busca uma mensagem específica pelo ID"
+          }
+        },
+        {
+          "name": "Buscar Mensagens por Canal",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/whatsapp/messages/channel/{{channelId}}?companyId={{companyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["whatsapp", "messages", "channel", "{{channelId}}"],
+              "query": [
+                {
+                  "key": "companyId",
+                  "value": "{{companyId}}"
+                }
+              ]
+            },
+            "description": "Busca mensagens por canal"
+          }
+        },
+        {
+          "name": "Buscar Mensagens por Ticket",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/whatsapp/messages/ticket/123?companyId={{companyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["whatsapp", "messages", "ticket", "123"],
+              "query": [
+                {
+                  "key": "companyId",
+                  "value": "{{companyId}}"
+                }
+              ]
+            },
+            "description": "Busca mensagens por ticket"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000/api",
+      "value": "http://localhost:3000",
       "type": "string"
     },
     {
       "key": "token",
-      "value": "",
+      "value": "seu_jwt_token_aqui",
+      "type": "string"
+    },
+    {
+      "key": "channelId",
+      "value": "1",
       "type": "string"
     },
     {
@@ -23,393 +313,5 @@
       "value": "1",
       "type": "string"
     }
-  ],
-  "item": [
-    {
-      "name": "Auth",
-      "item": [
-        {
-          "name": "Login",
-          "event": [],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@admin.com\",\n  \"password\": \"123456\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "login"]
-            },
-            "description": "Login to get access token"
-          },
-          "response": []
-        },
-        {
-          "name": "Me",
-          "event": [],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "me"]
-            },
-            "description": "Get current user information"
-          },
-          "response": []
-        },
-        {
-          "name": "Logout",
-          "event": [],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "logout"]
-            },
-            "description": "Logout current user"
-          },
-          "response": []
-        }
-      ],
-      "description": "Authentication endpoints"
-    },
-    {
-      "name": "WhatsApp",
-      "item": [
-        {
-          "name": "1. Autenticação e Credenciais",
-          "item": [
-            {
-              "name": "Criar Credencial",
-              "event": [],
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"clientId\": \"1195822431721175\",\n  \"clientSecret\": \"d798febfecd75842168691f20d7aa7ae\",\n  \"fbExchangeToken\": \"EAAQZCmBtB1tcBOZBJXMw6krK1Gj2ce6bORfZC4w2ZC0N3mzVOmMZC1eIXxKTZC6uVIGdXoB4q47LmzarwOBbxHVl1bC8gZAqP1nH87OLuhLbNsQXgQtTAON3oOy0qwPZBf1ZATaCMFwT79OmqTEYpPkfGSrmnUoroIwK1EGoY8U2WG3rWE3wiD3z0eibltCeHKJqImHvfYMnmNoANcAZDZD\"\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/whatsapp/auth?companyId={{companyId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["whatsapp", "auth"],
-                  "query": [
-                    {
-                      "key": "companyId",
-                      "value": "{{companyId}}"
-                    }
-                  ]
-                },
-                "description": "Create new WhatsApp credential"
-              },
-              "response": []
-            },
-            {
-              "name": "Atualizar Credencial",
-              "event": [],
-              "request": {
-                "method": "PUT",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"clientId\": \"1195822431721175\",\n  \"clientSecret\": \"d798febfecd75842168691f20d7aa7ae\",\n  \"fbExchangeToken\": \"EAAQZCmBtB1tcBOZBJXMw6krK1Gj2ce6bORfZC4w2ZC0N3mzVOmMZC1eIXxKTZC6uVIGdXoB4q47LmzarwOBbxHVl1bC8gZAqP1nH87OLuhLbNsQXgQtTAON3oOy0qwPZBf1ZATaCMFwT79OmqTEYpPkfGSrmnUoroIwK1EGoY8U2WG3rWE3wiD3z0eibltCeHKJqImHvfYMnmNoANcAZDZD\"\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/whatsapp/auth/1?companyId={{companyId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["whatsapp", "auth", "1"],
-                  "query": [
-                    {
-                      "key": "companyId",
-                      "value": "{{companyId}}"
-                    }
-                  ]
-                },
-                "description": "Update existing WhatsApp credential"
-              },
-              "response": []
-            },
-            {
-              "name": "Histórico de Credenciais",
-              "event": [],
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseUrl}}/whatsapp/auth/history?companyId={{companyId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["whatsapp", "auth", "history"],
-                  "query": [
-                    {
-                      "key": "companyId",
-                      "value": "{{companyId}}"
-                    }
-                  ]
-                },
-                "description": "Get credentials history"
-              },
-              "response": []
-            }
-          ],
-          "description": "WhatsApp authentication and credentials management"
-        },
-        {
-          "name": "2. Canais",
-          "item": [
-            {
-              "name": "Criar Canal",
-              "event": [],
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"name\": \"Canal Principal\",\n  \"number\": \"5511999999999\",\n  \"description\": \"Canal principal da empresa\",\n  \"companyId\": {{companyId}},\n  \"departmentId\": 1,\n  \"isDefault\": true\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/whatsapp/channels",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["whatsapp", "channels"]
-                },
-                "description": "Create new WhatsApp channel"
-              },
-              "response": []
-            },
-            {
-              "name": "Listar Canais",
-              "event": [],
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseUrl}}/whatsapp/channels?companyId={{companyId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["whatsapp", "channels"],
-                  "query": [
-                    {
-                      "key": "companyId",
-                      "value": "{{companyId}}"
-                    }
-                  ]
-                },
-                "description": "List all channels"
-              },
-              "response": []
-            },
-            {
-              "name": "Obter Canal",
-              "event": [],
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseUrl}}/whatsapp/channels/1?companyId={{companyId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["whatsapp", "channels", "1"],
-                  "query": [
-                    {
-                      "key": "companyId",
-                      "value": "{{companyId}}"
-                    }
-                  ]
-                },
-                "description": "Get specific channel"
-              },
-              "response": []
-            }
-          ],
-          "description": "WhatsApp channels management"
-        },
-        {
-          "name": "3. Conexão",
-          "item": [
-            {
-              "name": "Conectar Canal",
-              "event": [],
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseUrl}}/whatsapp/channels/1/connect?companyId={{companyId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["whatsapp", "channels", "1", "connect"],
-                  "query": [
-                    {
-                      "key": "companyId",
-                      "value": "{{companyId}}"
-                    }
-                  ]
-                },
-                "description": "Connect channel to WhatsApp"
-              },
-              "response": []
-            },
-            {
-              "name": "Desconectar Canal",
-              "event": [],
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseUrl}}/whatsapp/channels/1/disconnect?companyId={{companyId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["whatsapp", "channels", "1", "disconnect"],
-                  "query": [
-                    {
-                      "key": "companyId",
-                      "value": "{{companyId}}"
-                    }
-                  ]
-                },
-                "description": "Disconnect channel from WhatsApp"
-              },
-              "response": []
-            },
-            {
-              "name": "Status do Canal",
-              "event": [],
-              "request": {
-                "method": "GET",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  }
-                ],
-                "url": {
-                  "raw": "{{baseUrl}}/whatsapp/channels/1/status?companyId={{companyId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["whatsapp", "channels", "1", "status"],
-                  "query": [
-                    {
-                      "key": "companyId",
-                      "value": "{{companyId}}"
-                    }
-                  ]
-                },
-                "description": "Get channel connection status"
-              },
-              "response": []
-            }
-          ],
-          "description": "WhatsApp connection management"
-        },
-        {
-          "name": "4. Mensagens",
-          "item": [
-            {
-              "name": "Enviar Mensagem",
-              "event": [],
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Authorization",
-                    "value": "Bearer {{token}}"
-                  },
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"to\": \"5511999999999\",\n  \"type\": \"text\",\n  \"text\": \"Olá, esta é uma mensagem de teste!\"\n}"
-                },
-                "url": {
-                  "raw": "{{baseUrl}}/whatsapp/channels/1/messages?companyId={{companyId}}",
-                  "host": ["{{baseUrl}}"],
-                  "path": ["whatsapp", "channels", "1", "messages"],
-                  "query": [
-                    {
-                      "key": "companyId",
-                      "value": "{{companyId}}"
-                    }
-                  ]
-                },
-                "description": "Send message through WhatsApp"
-              },
-              "response": []
-            }
-          ],
-          "description": "WhatsApp messaging"
-        }
-      ],
-      "description": "WhatsApp related endpoints"
-    }
   ]
-} 
+}

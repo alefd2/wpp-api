@@ -5,11 +5,15 @@ import { PrismaService } from 'src/prisma.service';
 import { Prisma } from '@prisma/client';
 import { WhatsappConfigDto } from '../dto/whatsapp-config.dto';
 import { WhatsappApiService } from './whatsapp-api.service';
-import { WhatsappMessageService, SendMessageDto } from './whatsapp-message.service';
+import { WhatsappMessageService } from './whatsapp-message.service';
+import { SendMessageDto } from '../dto/send-message.dto';
 import { WhatsappStatus } from '../enums/whatsapp-status.enum';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class ChannelService {
+  private readonly logger = new Logger(ChannelService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly whatsappAuthService: WhatsappAuthService,
@@ -58,7 +62,7 @@ export class ChannelService {
       fbNumberPhoneId: createChannelDto.fbNumberPhoneId,
       accountWBId: createChannelDto.accountWBId,
     };
-    
+
     return this.prisma.channel.create({
       data: channelData,
       include: {
@@ -79,7 +83,7 @@ export class ChannelService {
       },
     });
 
-    return channels
+    return channels;
   }
 
   async findOne(id: number, companyId: number) {
@@ -104,7 +108,7 @@ export class ChannelService {
 
   async connect(id: number, companyId: number) {
     const channel = await this.findOne(id, companyId);
-    
+
     if (!channel.credential) {
       throw new NotFoundException('Canal não possui credencial configurada');
     }
@@ -115,7 +119,9 @@ export class ChannelService {
 
     // Verifica se as configurações necessárias existem
     if (!channel.fbNumberPhoneId || !channel.accountWBId) {
-      throw new NotFoundException('Canal não possui as configurações necessárias (fbNumberPhoneId e accountWBId)');
+      throw new NotFoundException(
+        'Canal não possui as configurações necessárias (fbNumberPhoneId e accountWBId)',
+      );
     }
 
     // Atualiza o status do canal
@@ -148,7 +154,7 @@ export class ChannelService {
 
   async getStatus(id: number, companyId: number) {
     const channel = await this.findOne(id, companyId);
-    
+
     return {
       status: channel.status,
       fbNumberPhoneId: channel.fbNumberPhoneId,
@@ -160,7 +166,11 @@ export class ChannelService {
     };
   }
 
-  async update(id: number, data: Partial<WhatsappConfigDto>, companyId: number) {
+  async update(
+    id: number,
+    data: Partial<WhatsappConfigDto>,
+    companyId: number,
+  ) {
     const channel = await this.findOne(id, companyId);
 
     const updateData: Prisma.ChannelUpdateInput = {};
@@ -191,12 +201,30 @@ export class ChannelService {
   }
 
   async sendMessage(id: number, companyId: number, data: SendMessageDto) {
+    // Busca e valida o canal
     const channel = await this.findOne(id, companyId);
 
+    // Verifica se o canal está conectado
     if (channel.status !== 'CONNECTED') {
       throw new NotFoundException('Canal não está conectado');
     }
 
-    return this.messageService.sendMessage(data);
+    // Verifica se o canal tem as credenciais necessárias
+    if (!channel.credential || !channel.credential.active) {
+      throw new NotFoundException('Canal não possui credenciais válidas');
+    }
+
+    try {
+      // Envia a mensagem através do serviço de mensagens
+      const response = await this.messageService.sendMessage(channel.id, data);
+
+      return response;
+    } catch (error) {
+      // Log do erro
+      this.logger.error(`Erro ao enviar mensagem pelo canal ${id}:`, error);
+
+      // Re-throw do erro para ser tratado pelo controlador
+      throw error;
+    }
   }
-} 
+}

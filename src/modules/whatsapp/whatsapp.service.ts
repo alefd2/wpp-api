@@ -17,13 +17,13 @@ export class WhatsappService extends BaseService<Whatsapp> {
 
   async findAll(companyId: number) {
     return this.prisma.whatsapp.findMany({
-      where: { companyId }
+      where: { companyId },
     });
   }
 
   async findOne(id: number, companyId: number) {
     const whatsapp = await this.prisma.whatsapp.findFirst({
-      where: { id, companyId }
+      where: { id, companyId },
     });
 
     this.validateCompanyAccess(whatsapp, companyId);
@@ -34,18 +34,22 @@ export class WhatsappService extends BaseService<Whatsapp> {
     return this.prisma.whatsapp.create({
       data: {
         ...data,
-        status: WhatsappStatus.DISCONNECTED
-      }
+        status: WhatsappStatus.DISCONNECTED,
+      },
     });
   }
 
-  async update(id: number, data: Partial<WhatsappConfigDto>, companyId: number) {
+  async update(
+    id: number,
+    data: Partial<WhatsappConfigDto>,
+    companyId: number,
+  ) {
     const whatsapp = await this.findOne(id, companyId);
     this.validateCompanyAccess(whatsapp, companyId);
 
     return this.prisma.whatsapp.update({
       where: { id },
-      data
+      data,
     });
   }
 
@@ -71,7 +75,7 @@ export class WhatsappService extends BaseService<Whatsapp> {
 
       // Verificar status do número
       const status = await this.whatsappApi.checkPhoneNumber();
-      
+
       if (status.status === WhatsappStatus.ERROR) {
         throw new Error(status.error);
       }
@@ -86,17 +90,24 @@ export class WhatsappService extends BaseService<Whatsapp> {
       const profile = await this.whatsappApi.getBusinessProfile();
 
       // Atualizar status para CONNECTED
-      return await this.update(id, { 
-        status: WhatsappStatus.CONNECTED,
-        session: JSON.stringify(profile)
-      }, companyId);
-
+      return await this.update(
+        id,
+        {
+          status: WhatsappStatus.CONNECTED,
+          session: JSON.stringify(profile),
+        },
+        companyId,
+      );
     } catch (error) {
       // Atualizar status para ERROR
-      await this.update(id, { 
-        status: WhatsappStatus.ERROR,
-        session: JSON.stringify({ error: error.message })
-      }, companyId);
+      await this.update(
+        id,
+        {
+          status: WhatsappStatus.ERROR,
+          session: JSON.stringify({ error: error.message }),
+        },
+        companyId,
+      );
       throw error;
     }
   }
@@ -108,12 +119,16 @@ export class WhatsappService extends BaseService<Whatsapp> {
     try {
       // Desregistrar o número
       await this.whatsappApi.deregisterPhone();
-      
-      return await this.update(id, { 
-        status: WhatsappStatus.DISCONNECTED,
-        session: null,
-        qrcode: null
-      }, companyId);
+
+      return await this.update(
+        id,
+        {
+          status: WhatsappStatus.DISCONNECTED,
+          session: null,
+          qrcode: null,
+        },
+        companyId,
+      );
     } catch (error) {
       throw error;
     }
@@ -126,7 +141,7 @@ export class WhatsappService extends BaseService<Whatsapp> {
     try {
       // Verificar status atual na API
       const status = await this.whatsappApi.checkPhoneNumber();
-      
+
       if (status.status !== whatsapp.status) {
         // Atualizar status no banco se diferente
         await this.update(id, { status: status.status }, companyId);
@@ -139,7 +154,7 @@ export class WhatsappService extends BaseService<Whatsapp> {
         status: status.status,
         qrcode: whatsapp.qrcode,
         session: whatsapp.session,
-        profile: status.data
+        profile: status.data,
       };
     } catch (error) {
       return {
@@ -147,7 +162,7 @@ export class WhatsappService extends BaseService<Whatsapp> {
         name: whatsapp.name,
         number: whatsapp.number,
         status: WhatsappStatus.ERROR,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -155,4 +170,4 @@ export class WhatsappService extends BaseService<Whatsapp> {
   async verifyToken(token: string) {
     return this.whatsappApi.verifyToken(token);
   }
-} 
+}

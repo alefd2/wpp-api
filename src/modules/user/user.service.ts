@@ -2,8 +2,8 @@ import { Injectable, ConflictException } from '@nestjs/common';
 import { BaseService } from '../base/base.service';
 import { PrismaService } from '../../prisma.service';
 import * as bcrypt from 'bcrypt';
-import { User} from '@prisma/client';
-import { CreateUserDto } from './dto/create-user.dto';
+import { User } from '@prisma/client';
+import { CreateUserDto } from './dto/user.dto';
 
 @Injectable()
 export class UserService extends BaseService<User> {
@@ -17,10 +17,10 @@ export class UserService extends BaseService<User> {
       include: {
         departments: {
           include: {
-            department: true
-          }
-        }
-      }
+            department: true,
+          },
+        },
+      },
     });
   }
 
@@ -30,39 +30,41 @@ export class UserService extends BaseService<User> {
       include: {
         departments: {
           include: {
-            department: true
-          }
-        }
-      }
+            department: true,
+          },
+        },
+      },
     });
 
     this.validateCompanyAccess(user, companyId);
     return user;
   }
 
-  async create(data: CreateUserDto) {
+  async create(data: CreateUserDto & { companyId: number }): Promise<User> {
     const existingUser = await this.prisma.user.findUnique({
-      where: { email: data.email }
+      where: { email: data.email },
     });
 
     if (existingUser) {
       throw new ConflictException('Email already exists');
     }
 
+    this.validateCompanyAccess(data, data.companyId);
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     return this.prisma.user.create({
       data: {
         ...data,
-        password: hashedPassword
+        password: hashedPassword,
       },
       include: {
         departments: {
           include: {
-            department: true
-          }
-        }
-      }
+            department: true,
+          },
+        },
+      },
     });
   }
 
@@ -80,10 +82,10 @@ export class UserService extends BaseService<User> {
       include: {
         departments: {
           include: {
-            department: true
-          }
-        }
-      }
+            department: true,
+          },
+        },
+      },
     });
   }
 
@@ -93,4 +95,4 @@ export class UserService extends BaseService<User> {
 
     await this.prisma.user.delete({ where: { id } });
   }
-} 
+}

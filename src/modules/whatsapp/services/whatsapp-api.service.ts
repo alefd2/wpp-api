@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { WhatsappStatus } from '../enums/whatsapp-status.enum';
 import { ChannelProvider } from './channel-factory.service';
@@ -25,20 +25,41 @@ export class WhatsappApiService implements ChannelProvider {
         'Content-Type': 'application/json',
       },
     });
+
+    // Interceptor para log de erros
+    this.api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        this.logger.error('WhatsApp API Error:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          config: {
+            url: error.config?.url,
+            method: error.config?.method,
+          },
+        });
+        throw error;
+      },
+    );
   }
 
   async connect(): Promise<any> {
     try {
-      const response = await this.api.post(`/${this.phoneNumberId}/register`);
-      return response.data;
+      const response = await this.checkPhoneNumber();
+      return response;
     } catch (error) {
-      this.logger.error('Error connecting:', error.response?.data || error.message);
+      this.logger.error(
+        'Error connecting:',
+        error.response?.data || error.message,
+      );
       throw error;
     }
   }
 
   async disconnect(): Promise<any> {
-    return this.deregisterPhone();
+    return {
+      status: WhatsappStatus.DISCONNECTED,
+    };
   }
 
   async getStatus(): Promise<any> {
@@ -51,22 +72,33 @@ export class WhatsappApiService implements ChannelProvider {
 
   async getBusinessProfile(): Promise<any> {
     try {
-      const response = await this.api.get(`/${this.phoneNumberId}/whatsapp_business_profile`);
+      const response = await this.api.get(
+        `/${this.phoneNumberId}/whatsapp_business_profile`,
+      );
       return response.data;
     } catch (error) {
-      this.logger.error('Error getting business profile:', error.response?.data || error.message);
+      this.logger.error(
+        'Error getting business profile:',
+        error.response?.data || error.message,
+      );
       throw error;
     }
   }
 
   async registerWebhook(url: string): Promise<any> {
     try {
-      const response = await this.api.post(`/${this.phoneNumberId}/subscribed_apps`, {
-        access_token: this.accessToken,
-      });
+      const response = await this.api.post(
+        `/${this.phoneNumberId}/subscribed_apps`,
+        {
+          access_token: this.accessToken,
+        },
+      );
       return response.data;
     } catch (error) {
-      this.logger.error('Error registering webhook:', error.response?.data || error.message);
+      this.logger.error(
+        'Error registering webhook:',
+        error.response?.data || error.message,
+      );
       throw error;
     }
   }
@@ -79,7 +111,10 @@ export class WhatsappApiService implements ChannelProvider {
         data: response.data,
       };
     } catch (error) {
-      this.logger.error('Error checking phone number:', error.response?.data || error.message);
+      this.logger.error(
+        'Error checking phone number:',
+        error.response?.data || error.message,
+      );
       return {
         status: WhatsappStatus.ERROR,
         error: error.response?.data || error.message,
@@ -96,28 +131,93 @@ export class WhatsappApiService implements ChannelProvider {
       });
       return response.data;
     } catch (error) {
-      this.logger.error('Error updating phone number:', error.response?.data || error.message);
+      this.logger.error(
+        'Error updating phone number:',
+        error.response?.data || error.message,
+      );
       throw error;
     }
   }
 
   async deregisterPhone(): Promise<any> {
     try {
-      const response = await this.api.delete(`/${this.phoneNumberId}/deregister`);
+      const response = await this.api.delete(
+        `/${this.phoneNumberId}/deregister`,
+      );
       return response.data;
     } catch (error) {
-      this.logger.error('Error deregistering phone:', error.response?.data || error.message);
+      this.logger.error(
+        'Error deregistering phone:',
+        error.response?.data || error.message,
+      );
       throw error;
     }
   }
 
   async sendMessage(message: any): Promise<any> {
     try {
-      const response = await this.api.post(`/${this.phoneNumberId}/messages`, message);
+      // Validação básica da mensagem
+      if (!message.to || !message.type) {
+        throw new BadRequestException('Invalid message format');
+      }
+
+      // Envio para a API do WhatsApp
+      const response = await this.api.post(
+        `/${this.phoneNumberId}/messages`,
+        message,
+      );
+
+      // Log de sucesso
+      this.logger.log('Message sent successfully:', {
+        to: message.to,
+        type: message.type,
+        messageId: response.data.messages?.[0]?.id,
+      });
+
       return response.data;
     } catch (error) {
-      this.logger.error('Error sending message:', error.response?.data || error.message);
+      // Tratamento específico de erros da API
+      if (error.response?.data?.error) {
+        const apiError = error.response.data.error;
+        throw new BadRequestException({
+          code: apiError.code,
+          message: apiError.message,
+          details: apiError.error_data,
+        });
+      }
+
+      // Re-throw do erro original
       throw error;
     }
   }
-} 
+
+  async getMessageStatus(messageId: string): Promise<any> {
+    try {
+      const response = await this.api.get(
+        `/${this.phoneNumberId}/messages/${messageId}`,
+      );
+      return response.data;
+    } catch (error) {
+      this.logger.error(
+        `Error getting message status for ${messageId}:`,
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
+  }
+
+  async downloadMedia(mediaId: string): Promise<any> {
+    try {
+      const response = await this.api.get(
+        `/${this.phoneNumberId}/media/${mediaId}`,
+      );
+      return response.data;
+    } catch (error) {
+      this.logger.error(
+        `Error downloading media ${mediaId}:`,
+        error.response?.data || error.message,
+      );
+      throw error;
+    }
+  }
+}

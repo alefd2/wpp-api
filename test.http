@@ -1,0 +1,6 @@
+### Variáveis
+@baseUrl = http://localhost:3000
+@token = seu_jwt_token_aqui
+@channelId = 1
+@companyId = 1
+

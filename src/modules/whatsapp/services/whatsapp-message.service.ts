@@ -1,29 +1,132 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { WhatsappApiService } from './whatsapp-api.service';
-
-export interface SendMessageDto {
-  to: string;
-  type: 'text' | 'image' | 'document' | 'audio' | 'video';
-  text?: string;
-  caption?: string;
-  mediaUrl?: string;
-  filename?: string;
-}
+import { SendMessageDto, MessageType } from '../dto/send-message.dto';
+import { PrismaService } from '../../../prisma.service';
+import { Message } from '@prisma/client';
 
 @Injectable()
 export class WhatsappMessageService {
   private readonly logger = new Logger(WhatsappMessageService.name);
 
-  constructor(private readonly whatsappApi: WhatsappApiService) {}
+  constructor(
+    private readonly whatsappApi: WhatsappApiService,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  async sendMessage(data: SendMessageDto) {
+  async sendMessage(channelId: number, data: SendMessageDto) {
     try {
+      // Validar dados específicos por tipo de mensagem
+      this.validateMessageData(data);
+
+      // Construir a mensagem para a API do WhatsApp
       const message = this.buildMessage(data);
+
+      // Enviar a mensagem
       const response = await this.whatsappApi.sendMessage(message);
-      return response;
+
+      // Extrair o ID da mensagem da resposta
+      const messageId = response.messages[0].id;
+
+      // Salvar a mensagem no banco de dados
+      const savedMessage = await this.prisma.message.create({
+        data: {
+          messageId,
+          channelId,
+          from: data.to, // No caso de mensagem enviada, o "from" é o destinatário
+          type: data.type,
+          content: this.getMessageContent(data),
+          timestamp: new Date(),
+          status: 'SENT',
+          direction: 'OUTBOUND',
+        },
+      });
+
+      // Log de sucesso
+      this.logger.log(
+        `Mensagem ${messageId} enviada com sucesso para ${data.to}`,
+      );
+
+      return {
+        message: savedMessage,
+        whatsapp: response,
+      };
     } catch (error) {
-      this.logger.error('Error sending message:', error.response?.data || error.message);
+      // Log detalhado do erro
+      this.logger.error('Erro ao enviar mensagem:', {
+        error: error.response?.data || error.message,
+        data,
+        channelId,
+      });
+
+      // Re-throw com mensagem amigável
+      throw new BadRequestException(
+        error.response?.data?.error?.message ||
+          'Erro ao enviar mensagem. Por favor, tente novamente.',
+      );
+    }
+  }
+
+  async updateMessageStatus(messageId: string, status: string) {
+    try {
+      // Primeiro encontra a mensagem pelo messageId
+      const message = await this.prisma.message.findFirst({
+        where: { messageId },
+      });
+
+      if (!message) {
+        throw new NotFoundException(`Mensagem ${messageId} não encontrada`);
+      }
+
+      // Atualiza o status da mensagem
+      const updatedMessage = await this.prisma.message.update({
+        where: { id: message.id },
+        data: { status },
+      });
+
+      this.logger.log(
+        `Status da mensagem ${messageId} atualizado para ${status}`,
+      );
+
+      return updatedMessage;
+    } catch (error) {
+      this.logger.error(
+        `Erro ao atualizar status da mensagem ${messageId}:`,
+        error,
+      );
       throw error;
+    }
+  }
+
+  private validateMessageData(data: SendMessageDto) {
+    switch (data.type) {
+      case MessageType.TEXT:
+        if (!data.text) {
+          throw new BadRequestException('Text is required for text messages');
+        }
+        break;
+
+      case MessageType.IMAGE:
+      case MessageType.AUDIO:
+      case MessageType.VIDEO:
+        if (!data.mediaUrl) {
+          throw new BadRequestException(
+            `Media URL is required for ${data.type} messages`,
+          );
+        }
+        break;
+
+      case MessageType.DOCUMENT:
+        if (!data.mediaUrl || !data.filename) {
+          throw new BadRequestException(
+            'Media URL and filename are required for document messages',
+          );
+        }
+        break;
     }
   }
 
@@ -36,7 +139,7 @@ export class WhatsappMessageService {
     };
 
     switch (data.type) {
-      case 'text':
+      case MessageType.TEXT:
         return {
           ...base,
           text: {
@@ -44,7 +147,7 @@ export class WhatsappMessageService {
           },
         };
 
-      case 'image':
+      case MessageType.IMAGE:
         return {
           ...base,
           image: {
@@ -53,7 +156,7 @@ export class WhatsappMessageService {
           },
         };
 
-      case 'document':
+      case MessageType.DOCUMENT:
         return {
           ...base,
           document: {
@@ -63,7 +166,7 @@ export class WhatsappMessageService {
           },
         };
 
-      case 'audio':
+      case MessageType.AUDIO:
         return {
           ...base,
           audio: {
@@ -71,7 +174,7 @@ export class WhatsappMessageService {
           },
         };
 
-      case 'video':
+      case MessageType.VIDEO:
         return {
           ...base,
           video: {
@@ -81,7 +184,36 @@ export class WhatsappMessageService {
         };
 
       default:
-        throw new Error(`Unsupported message type: ${data.type}`);
+        throw new BadRequestException(`Unsupported message type: ${data.type}`);
     }
   }
-} 
+
+  private getMessageContent(data: SendMessageDto): string {
+    switch (data.type) {
+      case MessageType.TEXT:
+        return data.text;
+
+      case MessageType.IMAGE:
+      case MessageType.VIDEO:
+        return JSON.stringify({
+          url: data.mediaUrl,
+          caption: data.caption,
+        });
+
+      case MessageType.DOCUMENT:
+        return JSON.stringify({
+          url: data.mediaUrl,
+          filename: data.filename,
+          caption: data.caption,
+        });
+
+      case MessageType.AUDIO:
+        return JSON.stringify({
+          url: data.mediaUrl,
+        });
+
+      default:
+        return JSON.stringify(data);
+    }
+  }
+}

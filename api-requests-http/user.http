@@ -3,6 +3,9 @@
 @phone = 5585998546812
 @companyId = 1
 @token = 
+@channelId = 7
+
+
 
 ####################### Login com usuário admin
 # @name login
@@ -84,6 +87,10 @@ Content-Type: application/json
 GET {{baseUrl}}/whatsapp/auth/history?companyId={{companyId}}
 Authorization: Bearer {{token}}
 
+
+
+
+
 ####################### Canais do WhatsApp #######################
 
 ### 1. Criar novo canal
@@ -123,3 +130,126 @@ Authorization: Bearer {{token}}
 ### 6. Status do canal
 GET {{baseUrl}}/whatsapp/channels/7/status?companyId={{companyId}}
 Authorization: Bearer {{token}}
+
+
+
+
+
+
+####################### CONTATOS #######################
+
+### 1. Criar novo contato
+POST {{baseUrl}}/contacts
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "João Silva",
+  "phone": "5511999999999",
+  "email": "joao@example.comsss"
+}
+
+### Listar todos os contatos
+GET {{baseUrl}}/contacts
+Authorization: Bearer {{token}}
+
+### Buscar contatos
+GET {{baseUrl}}/contacts?search=joao
+Authorization: Bearer {{token}}
+
+### Buscar um contato específico
+GET {{baseUrl}}/contacts/1
+Authorization: Bearer {{token}}
+
+### Atualizar um contato
+PATCH {{baseUrl}}/contacts/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "João Silva Atualizado",
+  "email": "joao.novo@example.com"
+}
+
+### Deletar um contato
+DELETE {{baseUrl}}/contacts/1
+Authorization: Bearer {{token}} 
+
+
+
+
+####################### MENSAGENS #######################
+### Enviar mensagem de texto
+POST {{baseUrl}}/whatsapp/channels/{{channelId}}/messages?companyId={{companyId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "to": "5585998546812",
+  "type": "text",
+  "text": "Olá, como posso ajudar?"
+}
+
+### Enviar imagem
+POST {{baseUrl}}/whatsapp/channels/{{channelId}}/messages?companyId={{companyId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "to": "5585998546812",
+  "type": "image",
+  "mediaUrl": "https://www.adobe.com/br/express/feature/image/remove-background/png/media_142f9cf5285c2cdcda8375c1041d273a3f0383e5f.png?width=2000&format=webply&optimize=medium",
+  "caption": "Foto do produto"
+}
+
+### Enviar documento
+POST {{baseUrl}}/whatsapp/channels/{{channelId}}/messages?companyId={{companyId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "to": "5585998546812",
+  "type": "document",
+  "mediaUrl": "https://example.com/doc.pdf",
+  "filename": "contrato.pdf",
+  "caption": "Contrato de serviço"
+}
+
+### Enviar áudio
+POST {{baseUrl}}/whatsapp/channels/{{channelId}}/messages?companyId={{companyId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "to": "5585998546812",
+  "type": "audio",
+  "mediaUrl": "https://example.com/audio.mp3"
+}
+
+### Enviar vídeo
+POST {{baseUrl}}/whatsapp/channels/{{channelId}}/messages?companyId={{companyId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "to": "5585998546812",
+  "type": "video",
+  "mediaUrl": "https://example.com/video.mp4",
+  "caption": "Tutorial do produto"
+}
+
+### Consultar histórico de mensagens por telefone
+GET {{baseUrl}}/whatsapp/messages/phone/5585998546812?companyId={{companyId}}
+Authorization: Bearer {{token}}
+
+### Consultar mensagem específica
+GET {{baseUrl}}/whatsapp/messages/wamid.xxx123
+Authorization: Bearer {{token}}
+
+### Consultar mensagens por canal
+GET {{baseUrl}}/whatsapp/messages/channel/{{channelId}}?companyId={{companyId}}
+Authorization: Bearer {{token}}
+
+### Consultar mensagens por ticket
+GET {{baseUrl}}/whatsapp/messages/ticket/123?companyId={{companyId}}
+Authorization: Bearer {{token}} 

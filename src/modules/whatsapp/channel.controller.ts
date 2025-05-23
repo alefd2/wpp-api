@@ -1,9 +1,19 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { ChannelService } from './services/channel.service';
 import { WhatsappConfigDto } from './dto/whatsapp-config.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { SendMessageDto } from './services/whatsapp-message.service';
+import { SendMessageDto } from './dto/send-message.dto';
 
 @Controller('whatsapp/channels')
 @UseGuards(JwtAuthGuard)
@@ -21,7 +31,10 @@ export class ChannelController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @Query('companyId') companyId: string) {
+  async findOne(
+    @Param('id') id: string,
+    @Query('companyId') companyId: string,
+  ) {
     return this.channelService.findOne(Number(id), Number(companyId));
   }
 
@@ -40,20 +53,28 @@ export class ChannelController {
   }
 
   @Post(':id/connect')
-  async connect(@Param('id') id: string, @Query('companyId') companyId: string) {
+  async connect(
+    @Param('id') id: string,
+    @Query('companyId') companyId: string,
+  ) {
     return this.channelService.connect(Number(id), Number(companyId));
   }
 
   @Post(':id/disconnect')
-  async disconnect(@Param('id') id: string, @Query('companyId') companyId: string) {
+  async disconnect(
+    @Param('id') id: string,
+    @Query('companyId') companyId: string,
+  ) {
     return this.channelService.disconnect(Number(id), Number(companyId));
   }
 
   @Get(':id/status')
-  async getStatus(@Param('id') id: string, @Query('companyId') companyId: string) {
+  async getStatus(
+    @Param('id') id: string,
+    @Query('companyId') companyId: string,
+  ) {
     return this.channelService.getStatus(Number(id), Number(companyId));
   }
-
   @Post(':id/messages')
   async sendMessage(
     @Param('id') id: string,
@@ -62,4 +83,4 @@ export class ChannelController {
   ) {
     return this.channelService.sendMessage(Number(id), Number(companyId), data);
   }
-} 
+}
