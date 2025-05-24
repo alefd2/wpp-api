@@ -51,19 +51,21 @@ model Company {
 }
 
 model User {
-  id          Int              @id @default(autoincrement())
-  name        String
-  email       String           @unique
-  password    String
-  companyId   Int              @map("company_id")
-  active      Boolean          @default(true)
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
-  company     Company          @relation(fields: [companyId], references: [id])
-  departments DepartmentUser[]
-  tickets     Ticket[]
-  messages    Message[]
-  sessions    Session[]
+  id            Int              @id @default(autoincrement())
+  name          String
+  email         String           @unique
+  password      String
+  companyId     Int              @map("company_id")
+  active        Boolean          @default(true)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  company       Company          @relation(fields: [companyId], references: [id])
+  departments   DepartmentUser[]
+  tickets       Ticket[]
+  messages      Message[]
+  sessions      Session[]
+  transfersFrom TicketTransfer[] @relation("TransferFromUser")
+  transfersTo   TicketTransfer[] @relation("TransferToUser")
 
   @@map("users")
 }
@@ -81,6 +83,8 @@ model Department {
   tickets       Ticket[]
   Whatsapp      Whatsapp[]
   Channel       Channel[]
+  transfersFrom TicketTransfer[] @relation("TransferFromDept")
+  transfersTo   TicketTransfer[] @relation("TransferToDept")
 
   @@map("departments")
 }
@@ -113,42 +117,46 @@ model Contact {
 }
 
 model Ticket {
-  id           Int        @id @default(autoincrement())
-  protocol     String     @unique
+  id           Int              @id @default(autoincrement())
+  protocol     String           @unique
   status       String
   priority     String
-  companyId    Int        @map("company_id")
-  departmentId Int        @map("department_id")
-  contactId    Int        @map("contact_id")
-  userId       Int?       @map("user_id")
-  channelId    Int?       @map("channel_id")
-  active       Boolean    @default(true)
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
-  company      Company    @relation(fields: [companyId], references: [id])
-  department   Department @relation(fields: [departmentId], references: [id])
-  contact      Contact    @relation(fields: [contactId], references: [id])
-  user         User?      @relation(fields: [userId], references: [id])
-  channel      Channel?   @relation(fields: [channelId], references: [id])
+  companyId    Int              @map("company_id")
+  departmentId Int              @map("department_id")
+  contactId    Int              @map("contact_id")
+  userId       Int?             @map("user_id")
+  channelId    Int?             @map("channel_id")
+  active       Boolean          @default(true)
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+  company      Company          @relation(fields: [companyId], references: [id])
+  department   Department       @relation(fields: [departmentId], references: [id])
+  contact      Contact          @relation(fields: [contactId], references: [id])
+  user         User?            @relation(fields: [userId], references: [id])
+  channel      Channel?         @relation(fields: [channelId], references: [id])
   messages     Message[]
-  Whatsapp     Whatsapp?  @relation(fields: [whatsappId], references: [id])
+  Whatsapp     Whatsapp?        @relation(fields: [whatsappId], references: [id])
   whatsappId   Int?
   tags         Tag[]
+  transfers    TicketTransfer[]
 
   @@map("tickets")
 }
 
 model Message {
   id         Int       @id @default(autoincrement())
-  messageId  String // ID da mensagem no WhatsApp
+  messageId  String    @unique // ID da mensagem no WhatsApp
   channelId  Int       @map("channel_id")
   channel    Channel   @relation(fields: [channelId], references: [id])
   from       String // Número do remetente
   type       String // Tipo da mensagem (text, image, document, etc)
+  category   String    @default("CHAT") // CHAT, SYSTEM, NOTE, TRANSFER, CLOSURE
+  origin     String    @default("USER") // USER, CONTACT, BOT, SYSTEM
   content    String // Conteúdo da mensagem (texto ou JSON com dados da mídia)
   timestamp  DateTime // Timestamp da mensagem
   status     String // Status da mensagem (RECEIVED, SENT, DELIVERED, READ, FAILED)
   direction  String // Direção da mensagem (INBOUND, OUTBOUND)
+  metadata   Json?     @default("{}")
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   User       User?     @relation(fields: [userId], references: [id])
@@ -186,6 +194,8 @@ model Channel {
   tickets              Ticket[]
   createdAt            DateTime            @default(now()) @map("created_at")
   updatedAt            DateTime            @updatedAt @map("updated_at")
+  transfersFrom        TicketTransfer[]    @relation("TransferFromChannel")
+  transfersTo          TicketTransfer[]    @relation("TransferToChannel")
 
   @@index([companyId])
   @@index([departmentId])
@@ -312,4 +322,28 @@ model MessageTemplate {
   company    Company  @relation(fields: [companyId], references: [id])
 
   @@map("message_templates")
+}
+
+model TicketTransfer {
+  id            Int         @id @default(autoincrement())
+  ticketId      Int         @map("ticket_id")
+  fromUserId    Int?        @map("from_user_id")
+  toUserId      Int?        @map("to_user_id")
+  fromDeptId    Int?        @map("from_dept_id")
+  toDeptId      Int?        @map("to_dept_id")
+  fromChannelId Int?        @map("from_channel_id")
+  toChannelId   Int?        @map("to_channel_id")
+  type          String // USER, DEPARTMENT, CHANNEL
+  reason        String?
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  ticket        Ticket      @relation(fields: [ticketId], references: [id])
+  fromUser      User?       @relation("TransferFromUser", fields: [fromUserId], references: [id])
+  toUser        User?       @relation("TransferToUser", fields: [toUserId], references: [id])
+  fromDept      Department? @relation("TransferFromDept", fields: [fromDeptId], references: [id])
+  toDept        Department? @relation("TransferToDept", fields: [toDeptId], references: [id])
+  fromChannel   Channel?    @relation("TransferFromChannel", fields: [fromChannelId], references: [id])
+  toChannel     Channel?    @relation("TransferToChannel", fields: [toChannelId], references: [id])
+
+  @@map("ticket_transfers")
 }

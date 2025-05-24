@@ -1,7 +1,7 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../../../prisma.service';
 import { WhatsappAuthDto } from '../dto/whatsapp-auth.dto';
-import { CreateChannelDto } from '../dto/create-channel.dto';
+import { CreateChannelDto } from '../channel/dto/create-channel.dto';
 import { ChannelType } from '../enums/channel-type.enum';
 import axios from 'axios';
 
@@ -9,19 +9,19 @@ import axios from 'axios';
 export class WhatsappAuthService {
   private readonly logger = new Logger(WhatsappAuthService.name);
 
-  constructor(
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async authenticate(auth: WhatsappAuthDto, companyId: number) {
     try {
       // Verificar se já existe credencial ativa para esta empresa
-      const existingCredential = await this.prisma.whatsappCredential.findFirst({
-        where: { 
-          companyId,
-          active: true
-        }
-      });
+      const existingCredential = await this.prisma.whatsappCredential.findFirst(
+        {
+          where: {
+            companyId,
+            active: true,
+          },
+        },
+      );
 
       // Obter token de acesso do Facebook
       const fbResponse = await axios.get(
@@ -31,9 +31,9 @@ export class WhatsappAuthService {
             grant_type: 'fb_exchange_token',
             client_id: auth.clientId,
             client_secret: auth.clientSecret,
-            fb_exchange_token: auth.fbExchangeToken
-          }
-        }
+            fb_exchange_token: auth.fbExchangeToken,
+          },
+        },
       );
 
       const { access_token, token_type, expires_in } = fbResponse.data;
@@ -43,7 +43,7 @@ export class WhatsappAuthService {
       if (existingCredential) {
         await this.prisma.whatsappCredential.update({
           where: { id: existingCredential.id },
-          data: { active: false }
+          data: { active: false },
         });
       }
 
@@ -58,16 +58,16 @@ export class WhatsappAuthService {
           tokenType: token_type,
           expiresIn: expires_in,
           expiresAt,
-          active: true
-        }
+          active: true,
+        },
       });
 
-      return { 
+      return {
         success: true,
         credential: {
           id: newCredential.id,
-          expiresAt: newCredential.expiresAt
-        }
+          expiresAt: newCredential.expiresAt,
+        },
       };
     } catch (error) {
       this.logger.error('Authentication failed:', error);
@@ -75,81 +75,12 @@ export class WhatsappAuthService {
     }
   }
 
-  async createChannel(data: CreateChannelDto) {
-    try {
-      // Verificar se já existe um canal padrão se este for marcado como padrão
-      if (data.isDefault) {
-        const defaultChannel = await this.prisma.channel.findFirst({
-          where: {
-            companyId: data.companyId,
-            isDefault: true,
-          }
-        });
-
-        if (defaultChannel) {
-          // Remover flag de padrão do canal existente
-          await this.prisma.channel.update({
-            where: { id: defaultChannel.id },
-            data: { isDefault: false }
-          });
-        }
-      }
-
-      // Verificar se já existe um canal com o mesmo número
-      const existingChannel = await this.prisma.channel.findFirst({
-        where: {
-          number: data.number,
-          companyId: data.companyId,
-        }
-      });
-
-      if (existingChannel) {
-        throw new Error('A channel with this number already exists');
-      }
-
-      const credential = await this.prisma.whatsappCredential.findFirst({
-        where: { 
-          id: data.whatsappCredentialId,
-          companyId: data.companyId,
-          active: true
-        }
-      });
-      
-      if (!credential) {
-        throw new UnauthorizedException('Company does not have valid WhatsApp credentials');
-      }
-
-      // Criar o novo canal
-      const channel = await this.prisma.channel.create({
-        data: {
-          name: data.name,
-          number: data.number,
-          type: data.type,
-          description: data.description,
-          companyId: data.companyId,
-          departmentId: data.departmentId,
-          isDefault: data.isDefault || false,
-          whatsappCredentialId: data.whatsappCredentialId,
-        },
-        include: {
-          department: true,
-          credential: true,
-        }
-      });
-
-      return channel;
-    } catch (error) {
-      this.logger.error('Error creating channel:', error);
-      throw error;
-    }
-  }
-
   async getCompanyCredentials(companyId: number) {
     const credential = await this.prisma.whatsappCredential.findFirst({
-      where: { 
+      where: {
         companyId,
-        active: true
-      }
+        active: true,
+      },
     });
 
     if (!credential) {
@@ -159,21 +90,27 @@ export class WhatsappAuthService {
     // Verificar se o token está próximo de expirar (7 dias)
     const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     if (credential.expiresAt && credential.expiresAt < sevenDaysFromNow) {
-      this.logger.warn(`WhatsApp credential for company ${companyId} will expire soon on ${credential.expiresAt}`);
+      this.logger.warn(
+        `WhatsApp credential for company ${companyId} will expire soon on ${credential.expiresAt}`,
+      );
     }
 
     return credential;
   }
 
-  async updateCredentials(id: number, auth: WhatsappAuthDto, companyId: number) {
+  async updateCredentials(
+    id: number,
+    auth: WhatsappAuthDto,
+    companyId: number,
+  ) {
     try {
       // Verificar se a credencial existe e pertence à empresa
       const credential = await this.prisma.whatsappCredential.findFirst({
-        where: { 
+        where: {
           id,
           companyId,
-          active: true
-        }
+          active: true,
+        },
       });
 
       if (!credential) {
@@ -188,9 +125,9 @@ export class WhatsappAuthService {
             grant_type: 'fb_exchange_token',
             client_id: auth.clientId,
             client_secret: auth.clientSecret,
-            fb_exchange_token: auth.fbExchangeToken
-          }
-        }
+            fb_exchange_token: auth.fbExchangeToken,
+          },
+        },
       );
 
       const { access_token, token_type, expires_in } = fbResponse.data;
@@ -199,7 +136,7 @@ export class WhatsappAuthService {
       // Desativar credencial atual
       await this.prisma.whatsappCredential.update({
         where: { id },
-        data: { active: false }
+        data: { active: false },
       });
 
       // Criar nova credencial
@@ -213,16 +150,16 @@ export class WhatsappAuthService {
           tokenType: token_type,
           expiresIn: expires_in,
           expiresAt,
-          active: true
-        }
+          active: true,
+        },
       });
 
       return {
         success: true,
         credential: {
           id: newCredential.id,
-          expiresAt: newCredential.expiresAt
-        }
+          expiresAt: newCredential.expiresAt,
+        },
       };
     } catch (error) {
       this.logger.error('Error updating credentials:', error);
@@ -239,10 +176,10 @@ export class WhatsappAuthService {
         active: true,
         createdAt: true,
         expiresAt: true,
-        clientId: true
-      }
+        clientId: true,
+      },
     });
 
     return credentials;
   }
-} 
+}

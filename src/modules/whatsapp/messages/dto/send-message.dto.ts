@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEnum, IsOptional, IsUrl } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsUrl,
+  IsNotEmpty,
+} from 'class-validator';
 
 export enum MessageType {
   TEXT = 'text',
@@ -15,6 +21,7 @@ export class SendMessageDto {
     example: '5511999999999',
   })
   @IsString()
+  @IsNotEmpty()
   to: string;
 
   @ApiProperty({
@@ -23,6 +30,7 @@ export class SendMessageDto {
     example: MessageType.TEXT,
   })
   @IsEnum(MessageType)
+  @IsNotEmpty()
   type: MessageType;
 
   @ApiProperty({

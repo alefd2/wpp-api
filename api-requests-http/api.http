@@ -91,7 +91,7 @@ Authorization: Bearer {{token}}
 
 
 
-####################### Canais do WhatsApp #######################
+####################### Canais do WhatsApp (TESTADO E FUNCIONANDO) #######################
 
 ### 1. Criar novo canal
 POST {{baseUrl}}/whatsapp/channels
@@ -99,7 +99,7 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "name": "Canal Principal",
+  "name": "Canal Principal 11",
   "number": "15551489509",
   "description": "Canal principal da empresa",
   "companyId": {{companyId}},
@@ -120,18 +120,20 @@ GET {{baseUrl}}/whatsapp/channels/7?companyId={{companyId}}
 Authorization: Bearer {{token}}
 
 ### 4. Conectar canal
-POST {{baseUrl}}/whatsapp/channels/7/connect?companyId={{companyId}}
+PATCH {{baseUrl}}/whatsapp/channels/7/connect?companyId={{companyId}}
 Authorization: Bearer {{token}}
 
 ### 5. Desconectar canal
-POST {{baseUrl}}/whatsapp/channels/7/disconnect?companyId={{companyId}}
+PATCH {{baseUrl}}/whatsapp/channels/7/disconnect?companyId={{companyId}}
 Authorization: Bearer {{token}}
 
 ### 6. Status do canal
 GET {{baseUrl}}/whatsapp/channels/7/status?companyId={{companyId}}
 Authorization: Bearer {{token}}
 
-
+### 7. Remover canal
+DELETE {{baseUrl}}/whatsapp/channels/11?companyId={{companyId}}
+Authorization: Bearer {{token}}
 
 
 
@@ -180,7 +182,7 @@ Authorization: Bearer {{token}}
 
 ####################### MENSAGENS #######################
 ### Enviar mensagem de texto
-POST {{baseUrl}}/whatsapp/channels/{{channelId}}/messages?companyId={{companyId}}
+POST {{baseUrl}}/whatsapp/messages/channel/{{channelId}}/send?companyId={{companyId}}
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -191,7 +193,7 @@ Content-Type: application/json
 }
 
 ### Enviar imagem
-POST {{baseUrl}}/whatsapp/channels/{{channelId}}/messages?companyId={{companyId}}
+POST {{baseUrl}}/whatsapp/messages/channel/{{channelId}}/send?companyId={{companyId}}
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -203,7 +205,7 @@ Content-Type: application/json
 }
 
 ### Enviar documento
-POST {{baseUrl}}/whatsapp/channels/{{channelId}}/messages?companyId={{companyId}}
+POST {{baseUrl}}/whatsapp/messages/channel/{{channelId}}/send?companyId={{companyId}}
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -216,7 +218,7 @@ Content-Type: application/json
 }
 
 ### Enviar áudio
-POST {{baseUrl}}/whatsapp/channels/{{channelId}}/messages?companyId={{companyId}}
+POST {{baseUrl}}/whatsapp/messages/channel/{{channelId}}/send?companyId={{companyId}}
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -227,7 +229,7 @@ Content-Type: application/json
 }
 
 ### Enviar vídeo
-POST {{baseUrl}}/whatsapp/channels/{{channelId}}/messages?companyId={{companyId}}
+POST {{baseUrl}}/whatsapp/messages/channel/{{channelId}}/send?companyId={{companyId}}
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
@@ -243,7 +245,7 @@ GET {{baseUrl}}/whatsapp/messages/phone/5585998546812?companyId={{companyId}}
 Authorization: Bearer {{token}}
 
 ### Consultar mensagem específica
-GET {{baseUrl}}/whatsapp/messages/wamid.xxx123
+GET {{baseUrl}}/whatsapp/messages/wamid.HBgMNTU4NTk4NTQ2ODEyFQIAEhggODY2MjZEMEYzMkJDQUUyQTE2OERDMjhGRThBREQ4MjQA
 Authorization: Bearer {{token}}
 
 ### Consultar mensagens por canal
@@ -251,18 +253,77 @@ GET {{baseUrl}}/whatsapp/messages/channel/{{channelId}}?companyId={{companyId}}
 Authorization: Bearer {{token}}
 
 ### Consultar mensagens por ticket
-GET {{baseUrl}}/whatsapp/messages/ticket/123?companyId={{companyId}}
+GET {{baseUrl}}/whatsapp/messages/ticket/5?companyId={{companyId}}
 Authorization: Bearer {{token}}
 
-### Marcar mensagens como lidas
-POST {{baseUrl}}/whatsapp/channels/{{channelId}}/messages/mark-as-read
+### Marcar mensagens do contato como lidas 
+### TODO: tem que marcar com não lido do contato e não do channel
+POST {{baseUrl}}/whatsapp/messages/channel/{{channelId}}/mark-as-read
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "phone": "5511999999999"
+  "phone": "5585998546812"
 }
 
 ### Consultar o número de mensagens não lidas
-GET {{baseUrl}}/whatsapp/channels/{{channelId}}/messages/unread-count?phone=5511999999999
+GET {{baseUrl}}/whatsapp/messages/channel/{{channelId}}/unread-count?phone=5585998546812
+Authorization: Bearer {{token}}
+
+### Listar contatos com mensagens
+GET {{baseUrl}}/whatsapp/messages/channel/{{channelId}}/contacts?companyId={{companyId}}
 Authorization: Bearer {{token}} 
+
+
+
+
+####################### TICKETS #######################
+
+### Transferir ticket para outro atendente
+POST {{baseUrl}}/whatsapp/tickets/1/transfer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "type": "USER",
+  "fromId": 1,
+  "toId": 2,
+  "reason": "Atendente em horário de almoço"
+}
+
+### Transferir ticket para outro departamento
+POST {{baseUrl}}/whatsapp/tickets/5/transfer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "type": "DEPARTMENT",
+  "fromId": 1,
+  "toId": 4,
+  "reason": "Cliente solicitou falar com suporte técnico"
+}
+
+### Transferir ticket para outro canal
+POST {{baseUrl}}/whatsapp/tickets/1/transfer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "type": "CHANNEL",
+  "fromId": 1,
+  "toId": 2,
+  "reason": "Canal principal em manutenção"
+}
+
+### Listar histórico de transferências do ticket
+GET {{baseUrl}}/whatsapp/tickets/5/transfers
+Authorization: Bearer {{token}} 
+
+### Adicionar nota ao ticket
+POST {{baseUrl}}/whatsapp/tickets/5/notes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "content": "Cliente solicitou mais informações sobre o produto X. Preciso verificar com o setor de vendas."
+}

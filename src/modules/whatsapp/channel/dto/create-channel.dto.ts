@@ -1,4 +1,11 @@
-import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export enum ChannelType {
   WHATSAPP_CLOUD = 'WHATSAPP_CLOUD',
@@ -48,4 +55,4 @@ export class CreateChannelDto {
   @IsEnum(ChannelType)
   @IsNotEmpty()
   type: ChannelType;
-} 
+}

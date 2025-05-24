@@ -1,14 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateChannelDto } from '../dto/create-channel.dto';
-import { WhatsappAuthService } from './whatsapp-auth.service';
-import { PrismaService } from 'src/prisma.service';
+import { CreateChannelDto } from './dto/create-channel.dto';
+import { PrismaService } from '../../../prisma.service';
 import { Prisma } from '@prisma/client';
 import { WhatsappConfigDto } from '../dto/whatsapp-config.dto';
-import { WhatsappApiService } from './whatsapp-api.service';
-import { WhatsappMessageService } from './whatsapp-message.service';
-import { SendMessageDto } from '../dto/send-message.dto';
-import { WhatsappStatus } from '../enums/whatsapp-status.enum';
+import { SendMessageDto } from '../messages/dto/send-message.dto';
 import { Logger } from '@nestjs/common';
+import { WhatsappAuthService } from '../services/whatsapp-auth.service';
+import { WhatsappApiService } from '../services/whatsapp-api.service';
+import { WhatsappMessageService } from '../messages/whatsapp-message.service';
 
 @Injectable()
 export class ChannelService {
@@ -16,13 +15,10 @@ export class ChannelService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly whatsappAuthService: WhatsappAuthService,
-    private readonly whatsappApi: WhatsappApiService,
     private readonly messageService: WhatsappMessageService,
   ) {}
 
   async create(createChannelDto: CreateChannelDto) {
-    // Se isDefault for true, desativa outros canais default da empresa
     if (createChannelDto.isDefault) {
       await this.prisma.channel.updateMany({
         where: {
@@ -47,7 +43,6 @@ export class ChannelService {
       throw new NotFoundException('Credencial não encontrada ou inativa');
     }
 
-    // Prepara os dados do canal
     const channelData: Prisma.ChannelUncheckedCreateInput = {
       name: createChannelDto.name,
       number: createChannelDto.number,
@@ -67,6 +62,7 @@ export class ChannelService {
       data: channelData,
       include: {
         department: true,
+        credential: false,
       },
     });
   }
@@ -187,43 +183,40 @@ export class ChannelService {
     });
   }
 
-  async delete(id: number, companyId: number) {
+  async remove(id: number, companyId: number) {
     const channel = await this.findOne(id, companyId);
 
-    // Desconectar o canal antes de deletar se estiver conectado
-    if (channel.status === 'CONNECTED') {
-      await this.disconnect(id, companyId);
+    if (channel.active) {
+      throw new Error('Não é possível remover um canal ativo');
     }
 
     return this.prisma.channel.delete({
       where: { id },
+      include: {
+        department: false,
+        credential: false,
+      },
     });
   }
 
+  /* TODO: remover request daqui e colocar no module do messages */
   async sendMessage(id: number, companyId: number, data: SendMessageDto) {
-    // Busca e valida o canal
     const channel = await this.findOne(id, companyId);
 
-    // Verifica se o canal está conectado
     if (channel.status !== 'CONNECTED') {
       throw new NotFoundException('Canal não está conectado');
     }
 
-    // Verifica se o canal tem as credenciais necessárias
     if (!channel.credential || !channel.credential.active) {
       throw new NotFoundException('Canal não possui credenciais válidas');
     }
 
     try {
-      // Envia a mensagem através do serviço de mensagens
       const response = await this.messageService.sendMessage(channel.id, data);
 
       return response;
     } catch (error) {
-      // Log do erro
       this.logger.error(`Erro ao enviar mensagem pelo canal ${id}:`, error);
-
-      // Re-throw do erro para ser tratado pelo controlador
       throw error;
     }
   }

@@ -4,16 +4,18 @@ import { ConfigService } from '@nestjs/config';
 import { WhatsappController } from './whatsapp.controller';
 import { WhatsappService } from './whatsapp.service';
 import { WhatsappApiService } from './services/whatsapp-api.service';
-import { WhatsappMessageService } from './services/whatsapp-message.service';
+import { WhatsappMessageService } from './messages/whatsapp-message.service';
 import { WhatsappWebhookService } from './services/whatsapp-webhook.service';
 import { WhatsappAuthService } from './services/whatsapp-auth.service';
-import { ChannelFactoryService } from './services/channel-factory.service';
-import { ChannelService } from './services/channel.service';
+import { ChannelFactoryService } from './channel/channel-factory.service';
 import { PrismaService } from '../../prisma.service';
-import { ChannelController } from './channel.controller';
-import { MessageService } from './services/message.service';
-import { MessageController } from './message.controller';
+import { MessageService } from './messages/message.service';
+import { MessageController } from './messages/message.controller';
 import { WhatsappMessageProcessor } from './processors/whatsapp-message.processor';
+import { ChannelController } from './channel/channel.controller';
+import { ChannelService } from './channel/channel.service';
+import { TicketService } from './tickets/ticket.service';
+import { TicketController } from './tickets/ticket.controller';
 
 @Module({
   imports: [
@@ -21,7 +23,12 @@ import { WhatsappMessageProcessor } from './processors/whatsapp-message.processo
       name: 'whatsapp-messages',
     }),
   ],
-  controllers: [WhatsappController, ChannelController, MessageController],
+  controllers: [
+    WhatsappController,
+    ChannelController,
+    MessageController,
+    TicketController,
+  ],
   providers: [
     WhatsappService,
     WhatsappApiService,
@@ -33,6 +40,7 @@ import { WhatsappMessageProcessor } from './processors/whatsapp-message.processo
     MessageService,
     PrismaService,
     WhatsappMessageProcessor,
+    TicketService,
   ],
   exports: [
     WhatsappService,

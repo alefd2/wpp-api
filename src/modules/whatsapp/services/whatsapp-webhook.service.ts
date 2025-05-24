@@ -8,7 +8,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { PrismaService } from '../../../prisma.service';
 import { WhatsappWebhookDto } from '../interfaces/webhook.interface';
-import { WhatsappMessageService } from './whatsapp-message.service';
+import { WhatsappMessageService } from '../messages/whatsapp-message.service';
 
 type WhatsAppMessage =
   WhatsappWebhookDto['entry'][0]['changes'][0]['value']['messages'][0];
@@ -359,7 +359,6 @@ export class WhatsappWebhookService {
   private async processMessages(messages: any[]) {
     for (const message of messages) {
       try {
-        // Encontrar o canal pelo número do WhatsApp
         const channel = await this.prisma.channel.findFirst({
           where: {
             fbNumberPhoneId: message.metadata?.phone_number_id,
@@ -373,7 +372,6 @@ export class WhatsappWebhookService {
           continue;
         }
 
-        // Processa mensagem recebida
         await this.messageService.processInboundMessage(message, channel.id);
       } catch (error) {
         this.logger.error(`Erro ao processar mensagem ${message.id}:`, error);

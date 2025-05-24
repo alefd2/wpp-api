@@ -60,6 +60,13 @@ export class DocsService {
         description: 'Gerenciamento de atendentes e permissões',
       },
       {
+        id: 'channel-flow',
+        title: 'Fluxo dos channels ',
+        file: 'channel-flow.md',
+        category: 'Flows',
+        description: 'Fluxo dos chennels ',
+      },
+      {
         id: 'message-types',
         title: 'Tipos de Mensagens',
         file: 'message-types.md',
@@ -69,8 +76,8 @@ export class DocsService {
       },
       {
         id: 'webhooks',
-        title: 'Webhooks',
-        file: 'webhooks.md',
+        title: 'Webhook',
+        file: 'webhook.md',
         category: 'Integrações',
         icon: '🔄',
         description: 'Configuração e uso de webhooks',

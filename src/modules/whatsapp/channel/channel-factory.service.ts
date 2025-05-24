@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ChannelType } from '../enums/channel-type.enum';
-import { WhatsappApiService } from './whatsapp-api.service';
+import { WhatsappApiService } from '../services/whatsapp-api.service';
 
 export interface ChannelProvider {
   connect(): Promise<any>;
@@ -40,4 +40,4 @@ export class ChannelFactoryService {
         throw new Error(`Unsupported channel type: ${type}`);
     }
   }
-} 
+}

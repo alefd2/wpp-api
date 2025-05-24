@@ -1,7 +1,7 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { WhatsappStatus } from '../enums/whatsapp-status.enum';
-import { ChannelProvider } from './channel-factory.service';
+import { ChannelProvider } from '../channel/channel-factory.service';
 
 @Injectable()
 export class WhatsappApiService implements ChannelProvider {

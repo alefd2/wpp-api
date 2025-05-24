@@ -3,11 +3,12 @@ import {
   Logger,
   BadRequestException,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
-import { WhatsappApiService } from './whatsapp-api.service';
-import { SendMessageDto, MessageType } from '../dto/send-message.dto';
+import { WhatsappApiService } from '../services/whatsapp-api.service';
+import { SendMessageDto, MessageType } from './dto/send-message.dto';
 import { PrismaService } from '../../../prisma.service';
-import { Message } from '@prisma/client';
+import { MessageService } from './message.service';
 
 @Injectable()
 export class WhatsappMessageService {
@@ -16,29 +17,110 @@ export class WhatsappMessageService {
   constructor(
     private readonly whatsappApi: WhatsappApiService,
     private readonly prisma: PrismaService,
+    private readonly messageService: MessageService,
   ) {}
+
+  private async validateTicket(ticketId: number, channelId: number) {
+    const ticket = await this.prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: {
+        contact: true,
+      },
+    });
+
+    if (!ticket) {
+      throw new NotFoundException('Ticket não encontrado');
+    }
+
+    if (!ticket.active || ticket.status !== 'ACTIVE') {
+      throw new ConflictException('Ticket não está ativo');
+    }
+
+    if (ticket.channelId !== channelId) {
+      throw new ConflictException('Ticket não pertence a este canal');
+    }
+
+    return ticket;
+  }
+
+  private formatPhoneNumber(phone: string): string {
+    const numbers = phone.replace(/\D/g, '');
+
+    const withCountry = numbers.startsWith('55') ? numbers : `55${numbers}`;
+
+    const ddd = withCountry.substring(2, 4);
+    const rest = withCountry.substring(4);
+
+    // Se o resto tiver 8 dígitos, adiciona o 9
+    if (rest.length === 8) {
+      return `55${ddd}9${rest}`;
+    }
+
+    // Se já tiver 9 dígitos (com o 9), retorna como está
+    if (rest.length === 9 && rest.startsWith('9')) {
+      return `55${ddd}${rest}`;
+    }
+
+    // Para outros casos, retorna o número original formatado
+    return withCountry;
+  }
+
+  private async findActiveTicketByPhone(phone: string, channelId: number) {
+    const formattedPhone = this.formatPhoneNumber(phone);
+
+    // Busca o ticket ativo para este número de telefone
+    const ticket = await this.prisma.ticket.findFirst({
+      where: {
+        channelId,
+        active: true,
+        status: 'ACTIVE',
+        contact: {
+          phone: formattedPhone,
+        },
+      },
+      include: {
+        contact: true,
+      },
+      orderBy: {
+        createdAt: 'desc', // Pega o ticket mais recente se houver mais de um
+      },
+    });
+
+    if (!ticket) {
+      throw new NotFoundException(
+        `Nenhum ticket ativo encontrado para o número ${phone}`,
+      );
+    }
+
+    this.logger.log(
+      `Ticket ativo encontrado: #${ticket.id} para o número ${phone}`,
+    );
+    return ticket;
+  }
 
   async sendMessage(channelId: number, data: SendMessageDto) {
     try {
-      // Validar dados específicos por tipo de mensagem
+      // Encontra o ticket ativo para este número
+      const ticket = await this.findActiveTicketByPhone(data.to, channelId);
+
+      // Valida os dados da mensagem
       this.validateMessageData(data);
 
-      // Construir a mensagem para a API do WhatsApp
       const message = this.buildMessage(data);
 
-      // Enviar a mensagem
       const response = await this.whatsappApi.sendMessage(message);
 
-      // Extrair o ID da mensagem da resposta
       const messageId = response.messages[0].id;
 
-      // Salvar a mensagem no banco de dados
       const savedMessage = await this.prisma.message.create({
         data: {
           messageId,
           channelId,
-          from: data.to, // No caso de mensagem enviada, o "from" é o destinatário
+          ticketId: ticket.id, // Usa o ticket encontrado
+          from: data.to,
           type: data.type,
+          category: 'CHAT',
+          origin: 'USER',
           content: this.getMessageContent(data),
           timestamp: new Date(),
           status: 'SENT',
@@ -46,14 +128,17 @@ export class WhatsappMessageService {
         },
       });
 
-      // Log de sucesso
       this.logger.log(
-        `Mensagem ${messageId} enviada com sucesso para ${data.to}`,
+        `Mensagem ${messageId} enviada com sucesso para ${data.to} (Ticket #${ticket.id})`,
       );
 
       return {
         message: savedMessage,
         whatsapp: response,
+        ticket: {
+          id: ticket.id,
+          protocol: ticket.protocol,
+        },
       };
     } catch (error) {
       // Log detalhado do erro
@@ -63,17 +148,12 @@ export class WhatsappMessageService {
         channelId,
       });
 
-      // Re-throw com mensagem amigável
-      throw new BadRequestException(
-        error.response?.data?.error?.message ||
-          'Erro ao enviar mensagem. Por favor, tente novamente.',
-      );
+      throw error;
     }
   }
 
   async updateMessageStatus(messageId: string, status: string) {
     try {
-      // Primeiro encontra a mensagem pelo messageId
       const message = await this.prisma.message.findFirst({
         where: { messageId },
       });
@@ -220,13 +300,18 @@ export class WhatsappMessageService {
   async processInboundMessage(message: any, channelId: number) {
     try {
       const content = message.text?.body || JSON.stringify(message);
+      const formattedPhone = this.formatPhoneNumber(message.from);
+
+      this.logger.log(
+        `Número original: ${message.from}, Formatado: ${formattedPhone}`,
+      );
 
       // Primeiro salva a mensagem como RECEIVED
       const savedMessage = await this.prisma.message.create({
         data: {
           messageId: message.id,
           channelId,
-          from: message.from,
+          from: formattedPhone,
           type: message.type,
           content,
           timestamp: new Date(parseInt(message.timestamp) * 1000),
@@ -239,24 +324,8 @@ export class WhatsappMessageService {
         `Mensagem ${message.id} recebida e salva com status RECEIVED`,
       );
 
-      // Após um breve delay, atualiza para READ
-      setTimeout(async () => {
-        try {
-          await this.prisma.message.update({
-            where: { id: savedMessage.id },
-            data: {
-              status: 'READ',
-              timestamp: new Date(), // Atualiza o timestamp para quando foi lida
-            },
-          });
-          this.logger.log(`Mensagem ${message.id} atualizada para status READ`);
-        } catch (error) {
-          this.logger.error(
-            `Erro ao atualizar status para READ: ${message.id}`,
-            error,
-          );
-        }
-      }, 2000); // Delay de 2 segundos para simular o tempo de leitura
+      // Processa a mensagem para criar/atualizar contato e ticket
+      await this.messageService.handleNewMessage(savedMessage);
 
       return savedMessage;
     } catch (error) {
