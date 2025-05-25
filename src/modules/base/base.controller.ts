@@ -23,6 +23,8 @@ import { PageOptionsDto } from 'src/common/dto/page-options.dto';
 import { PageDto } from 'src/common/dto/page.dto';
 import { ApiPaginatedResponse } from 'src/common/decorators/paginated.decorator';
 import { ApiQuery } from '@nestjs/swagger';
+import { CurrentUser } from 'src/common/decorators/user.decorator';
+import { User } from '@prisma/client';
 
 export abstract class BaseController<
   T extends BaseResponseDto,
@@ -55,6 +57,7 @@ export abstract class BaseController<
   async findOne(
     @Param('id', ParseIntPipe) id: number,
     @CompanyId() companyId: number,
+    @CurrentUser() user: User,
   ): Promise<T> {
     return this.service.findOne(id, companyId);
   }
@@ -67,8 +70,9 @@ export abstract class BaseController<
   async create(
     @Body() data: CreateDto,
     @CompanyId() companyId: number,
+    @CurrentUser() user: User,
   ): Promise<T> {
-    return this.service.create({ ...data, companyId });
+    return this.service.create({ ...data, companyId, userId: user.id });
   }
 
   @Patch(':id')

@@ -196,6 +196,45 @@ Authorization: Bearer {{token}}
 
 
 
+################### Contact Observations ###################
+### Create a contact observation
+POST {{baseUrl}}/contact-observations
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "content": "O cliente é um cliente antigo",
+  "contactId": 1
+}
+
+### Get all observations (paginated)
+GET {{baseUrl}}/contact-observations?page=1&take=10&order=desc&search=
+Authorization: Bearer {{token}}
+
+### Get observations by contact (paginated)
+GET {{baseUrl}}/contact-observations/by-contact?contactId=1&page=1&take=10&order=desc&search=cliente
+Authorization: Bearer {{token}}
+
+### Get a specific observation
+GET {{baseUrl}}/contact-observations/1
+Authorization: Bearer {{token}}
+
+### Update an observation
+PATCH {{baseUrl}}/contact-observations/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "content": "Cliente prefere ser contactado no período da manhã"
+}
+
+### Delete an observation
+DELETE {{baseUrl}}/contact-observations/2
+Authorization: Bearer {{token}} 
+
+
+
+
 ####################### MENSAGENS #######################
 ### Enviar mensagem de texto
 POST {{baseUrl}}/whatsapp/messages/channel/{{channelId}}/send?companyId={{companyId}}

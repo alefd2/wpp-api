@@ -29,43 +29,45 @@ model Plan {
 }
 
 model Company {
-  id               Int                  @id @default(autoincrement())
-  name             String
-  planId           Int                  @map("plan_id")
-  active           Boolean              @default(true)
-  createdAt        DateTime             @default(now()) @map("created_at")
-  updatedAt        DateTime             @updatedAt @map("updated_at")
-  plan             Plan                 @relation(fields: [planId], references: [id])
-  departments      Department[]
-  users            User[]
-  contacts         Contact[]
-  tickets          Ticket[]
-  channels         Channel[]
-  credentials      WhatsappCredential[] @relation("CompanyCredentials")
-  Whatsapp         Whatsapp[]
-  tags             Tag[]
-  quickResponses   QuickResponse[]
-  messageTemplates MessageTemplate[]
+  id                 Int                  @id @default(autoincrement())
+  name               String
+  planId             Int                  @map("plan_id")
+  active             Boolean              @default(true)
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+  plan               Plan                 @relation(fields: [planId], references: [id])
+  departments        Department[]
+  users              User[]
+  contacts           Contact[]
+  tickets            Ticket[]
+  channels           Channel[]
+  credentials        WhatsappCredential[] @relation("CompanyCredentials")
+  Whatsapp           Whatsapp[]
+  tags               Tag[]
+  quickResponses     QuickResponse[]
+  messageTemplates   MessageTemplate[]
+  ContactObservation ContactObservation[]
 
   @@map("companies")
 }
 
 model User {
-  id            Int              @id @default(autoincrement())
-  name          String
-  email         String           @unique
-  password      String
-  companyId     Int              @map("company_id")
-  active        Boolean          @default(true)
-  createdAt     DateTime         @default(now()) @map("created_at")
-  updatedAt     DateTime         @updatedAt @map("updated_at")
-  company       Company          @relation(fields: [companyId], references: [id])
-  departments   DepartmentUser[]
-  tickets       Ticket[]
-  messages      Message[]
-  sessions      Session[]
-  transfersFrom TicketTransfer[] @relation("TransferFromUser")
-  transfersTo   TicketTransfer[] @relation("TransferToUser")
+  id                 Int                  @id @default(autoincrement())
+  name               String
+  email              String               @unique
+  password           String
+  companyId          Int                  @map("company_id")
+  active             Boolean              @default(true)
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+  company            Company              @relation(fields: [companyId], references: [id])
+  departments        DepartmentUser[]
+  tickets            Ticket[]
+  messages           Message[]
+  sessions           Session[]
+  transfersFrom      TicketTransfer[]     @relation("TransferFromUser")
+  transfersTo        TicketTransfer[]     @relation("TransferToUser")
+  ContactObservation ContactObservation[]
 
   @@map("users")
 }
@@ -102,24 +104,25 @@ model DepartmentUser {
 }
 
 model Contact {
-  id         Int      @id @default(autoincrement())
-  name       String
-  phone      String
-  email      String?
-  companyId  Int      @map("company_id")
-  active     Boolean  @default(true)
-  gender     String?
-  avatarUrl  String?
-  city       String?
-  state      String?
-  address    String?
-  complement String?
-  zipCode    String?  @map("zip_code")
-  country    String?
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-  company    Company  @relation(fields: [companyId], references: [id])
-  tickets    Ticket[]
+  id                 Int                  @id @default(autoincrement())
+  name               String
+  phone              String
+  email              String?
+  companyId          Int                  @map("company_id")
+  active             Boolean              @default(true)
+  gender             String?
+  avatarUrl          String?
+  city               String?
+  state              String?
+  address            String?
+  complement         String?
+  zipCode            String?              @map("zip_code")
+  country            String?
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+  company            Company              @relation(fields: [companyId], references: [id])
+  tickets            Ticket[]
+  ContactObservation ContactObservation[]
 
   @@map("contacts")
 }
@@ -354,4 +357,23 @@ model TicketTransfer {
   toChannel     Channel?    @relation("TransferToChannel", fields: [toChannelId], references: [id])
 
   @@map("ticket_transfers")
+}
+
+model ContactObservation {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.Text
+  contact   Contact  @relation(fields: [contactId], references: [id])
+  contactId Int
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  company   Company  @relation(fields: [companyId], references: [id])
+  companyId Int
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([contactId])
+  @@index([userId])
+  @@map("contact_observations")
 }
