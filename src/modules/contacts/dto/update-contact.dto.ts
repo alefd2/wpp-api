@@ -1,34 +1,51 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEmail, IsOptional } from 'class-validator';
-import {
-  BaseCreateDto,
-  BaseUpdateDto,
-  BaseResponseDto,
-} from '../../base/dto/base.dto';
+import { IsString, IsEmail, IsOptional, IsBoolean } from 'class-validator';
 
-export class ContactResponseDto extends BaseResponseDto {
+export class UpdateContactDto {
   @ApiProperty({
+    required: false,
     description: 'Nome do contato',
     example: 'João Silva',
   })
   @IsString()
-  name: string;
+  @IsOptional()
+  name?: string;
 
   @ApiProperty({
-    description: 'Número do telefone',
+    required: false,
+    description: 'Número de telefone',
     example: '5511999999999',
   })
   @IsString()
-  phone: string;
+  @IsOptional()
+  phone?: string;
 
   @ApiProperty({
-    description: 'Email do contato',
     required: false,
+    description: 'Email do contato',
     example: 'joao@example.com',
   })
   @IsEmail()
   @IsOptional()
   email?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Status do contato',
+    example: true,
+  })
+  @IsBoolean()
+  @IsOptional()
+  active?: boolean;
+
+  @ApiProperty({
+    required: false,
+    description: 'Observações sobre o contato',
+    example: 'Cliente VIP',
+  })
+  @IsString()
+  @IsOptional()
+  observation?: string;
 
   @ApiProperty({
     required: false,
@@ -48,20 +65,12 @@ export class ContactResponseDto extends BaseResponseDto {
   @IsOptional()
   avatarUrl?: string;
 
-  @ApiProperty({
-    required: false,
-    description: 'Cidade',
-    example: 'São Paulo',
-  })
+  @ApiProperty({ required: false, description: 'Cidade', example: 'São Paulo' })
   @IsString()
   @IsOptional()
   city?: string;
 
-  @ApiProperty({
-    required: false,
-    description: 'Estado',
-    example: 'SP',
-  })
+  @ApiProperty({ required: false, description: 'Estado', example: 'SP' })
   @IsString()
   @IsOptional()
   state?: string;
@@ -84,20 +93,12 @@ export class ContactResponseDto extends BaseResponseDto {
   @IsOptional()
   complement?: string;
 
-  @ApiProperty({
-    required: false,
-    description: 'CEP',
-    example: '01001-000',
-  })
+  @ApiProperty({ required: false, description: 'CEP', example: '01001-000' })
   @IsString()
   @IsOptional()
   zipCode?: string;
 
-  @ApiProperty({
-    required: false,
-    description: 'País',
-    example: 'Brasil',
-  })
+  @ApiProperty({ required: false, description: 'País', example: 'Brasil' })
   @IsString()
   @IsOptional()
   country?: string;

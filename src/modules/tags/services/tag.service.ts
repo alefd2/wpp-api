@@ -10,6 +10,10 @@ export class TagService extends BaseService<Tag> {
     super(prisma);
   }
 
+  protected getModelName(): string {
+    return 'tag';
+  }
+
   async findAll(companyId: number) {
     return this.prisma.tag.findMany({
       where: { companyId },

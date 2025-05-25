@@ -148,15 +148,23 @@ Authorization: Bearer {{token}}
 {
   "name": "João Silva",
   "phone": "5511999999999",
-  "email": "joao@example.comsss"
+  "email": "joao@example.com",
+  "gender": "M",
+  "avatarUrl": "https://example.com/avatar.jpg",
+  "city": "São Paulo",
+  "state": "SP",
+  "address": "Rua Example, 123",
+  "complement": "Apto 42",
+  "zipCode": "01234-567",
+  "country": "Brasil"
 }
 
-### Listar todos os contatos
-GET {{baseUrl}}/contacts
+### Listar todos os contatos (paginado)
+GET {{baseUrl}}/contacts?page=1&take=10&order=asc
 Authorization: Bearer {{token}}
 
-### Buscar contatos
-GET {{baseUrl}}/contacts?search=joao
+### Buscar contatos (paginado)
+GET {{baseUrl}}/contacts?search=joao&page=1&take=10&order=asc
 Authorization: Bearer {{token}}
 
 ### Buscar um contato específico
@@ -170,7 +178,15 @@ Authorization: Bearer {{token}}
 
 {
   "name": "João Silva Atualizado",
-  "email": "joao.novo@example.com"
+  "email": "joao.novo@example.com",
+  "gender": "M",
+  "avatarUrl": "https://example.com/new-avatar.jpg",
+  "city": "Rio de Janeiro",
+  "state": "RJ",
+  "address": "Av Example, 456",
+  "complement": "Sala 101",
+  "zipCode": "04321-765",
+  "country": "Brasil"
 }
 
 ### Deletar um contato

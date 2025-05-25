@@ -102,16 +102,24 @@ model DepartmentUser {
 }
 
 model Contact {
-  id        Int      @id @default(autoincrement())
-  name      String
-  phone     String
-  email     String?
-  companyId Int      @map("company_id")
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  company   Company  @relation(fields: [companyId], references: [id])
-  tickets   Ticket[]
+  id         Int      @id @default(autoincrement())
+  name       String
+  phone      String
+  email      String?
+  companyId  Int      @map("company_id")
+  active     Boolean  @default(true)
+  gender     String?
+  avatarUrl  String?
+  city       String?
+  state      String?
+  address    String?
+  complement String?
+  zipCode    String?  @map("zip_code")
+  country    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  company    Company  @relation(fields: [companyId], references: [id])
+  tickets    Ticket[]
 
   @@map("contacts")
 }

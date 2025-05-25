@@ -11,6 +11,10 @@ export class UserService extends BaseService<User> {
     super(prisma);
   }
 
+  protected getModelName(): string {
+    return 'user';
+  }
+
   async findAll(companyId: number) {
     return this.prisma.user.findMany({
       where: { companyId },

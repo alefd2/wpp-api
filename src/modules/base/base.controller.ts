@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { BaseService } from './base.service';
 import { CompanyId } from '../../common/decorators/company.decorator';
@@ -18,6 +19,10 @@ import {
   ApiUpdate,
   ApiRemove,
 } from '../../common/decorators/swagger.decorator';
+import { PageOptionsDto } from 'src/common/dto/page-options.dto';
+import { PageDto } from 'src/common/dto/page.dto';
+import { ApiPaginatedResponse } from 'src/common/decorators/paginated.decorator';
+import { ApiQuery } from '@nestjs/swagger';
 
 export abstract class BaseController<
   T extends BaseResponseDto,
@@ -30,7 +35,16 @@ export abstract class BaseController<
   @ApiList({
     response: { type: BaseResponseDto },
   })
-  async findAll(@CompanyId() companyId: number): Promise<T[]> {
+  @ApiPaginatedResponse(BaseResponseDto)
+  @ApiQuery({ name: 'search', required: false })
+  async findAll(
+    @CompanyId() companyId: number,
+    @Query() pageOptionsDto?: PageOptionsDto,
+    @Query('search') search?: string,
+  ): Promise<T[] | PageDto<T>> {
+    if (pageOptionsDto) {
+      return this.service.findAllPaginated(companyId, pageOptionsDto, search);
+    }
     return this.service.findAll(companyId);
   }
 
@@ -76,6 +90,6 @@ export abstract class BaseController<
     @Param('id', ParseIntPipe) id: number,
     @CompanyId() companyId: number,
   ): Promise<void> {
-    return this.service.delete(id, companyId);
+    return this.service.remove(id, companyId);
   }
 }

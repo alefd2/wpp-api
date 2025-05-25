@@ -1,12 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsEmail, IsOptional } from 'class-validator';
-import {
-  BaseCreateDto,
-  BaseUpdateDto,
-  BaseResponseDto,
-} from '../../base/dto/base.dto';
+import { BaseCreateDto } from 'src/modules/base/dto/base.dto';
 
-export class ContactResponseDto extends BaseResponseDto {
+export class CreateContactDto extends BaseCreateDto {
   @ApiProperty({
     description: 'Nome do contato',
     example: 'João Silva',

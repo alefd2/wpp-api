@@ -15,6 +15,10 @@ export class WhatsappService extends BaseService<Whatsapp> {
     super(prisma);
   }
 
+  protected getModelName(): string {
+    return 'whatsapp';
+  }
+
   async findAll(companyId: number) {
     return this.prisma.whatsapp.findMany({
       where: { companyId },
