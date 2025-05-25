@@ -207,10 +207,6 @@ Authorization: Bearer {{token}}
   "contactId": 1
 }
 
-### Get all observations (paginated)
-GET {{baseUrl}}/contact-observations?page=1&take=10&order=desc&search=
-Authorization: Bearer {{token}}
-
 ### Get observations by contact (paginated)
 GET {{baseUrl}}/contact-observations/by-contact?contactId=1&page=1&take=10&order=desc&search=cliente
 Authorization: Bearer {{token}}
