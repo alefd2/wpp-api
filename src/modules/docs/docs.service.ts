@@ -60,6 +60,14 @@ export class DocsService {
         description: 'Gerenciamento de atendentes e permissões',
       },
       {
+        id: 'permissions',
+        title: 'Permissionamento',
+        file: 'permissions.md',
+        category: 'Usuários',
+        icon: '�',
+        description: 'Gerenciamento de permissões',
+      },
+      {
         id: 'channel-flow',
         title: 'Fluxo dos channels ',
         file: 'channel-flow.md',
