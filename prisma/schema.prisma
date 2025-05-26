@@ -58,6 +58,7 @@ model User {
   password           String
   companyId          Int                  @map("company_id")
   active             Boolean              @default(true)
+  status             String?              @default("offline")
   createdAt          DateTime             @default(now()) @map("created_at")
   updatedAt          DateTime             @updatedAt @map("updated_at")
   company            Company              @relation(fields: [companyId], references: [id])

@@ -89,6 +89,16 @@ export class UpdateUserDto {
   @IsBoolean()
   @IsOptional()
   active?: boolean;
+
+  @ApiProperty({
+    description: 'Status de disponibilidade do usuário',
+    example: 'online',
+    required: false,
+    enum: ['online', 'offline', 'ocupado'],
+  })
+  @IsString()
+  @IsOptional()
+  status?: string;
 }
 
 export class UserResponseDto extends BaseResponseDto {
@@ -109,6 +119,13 @@ export class UserResponseDto extends BaseResponseDto {
     example: true,
   })
   active: boolean;
+
+  @ApiProperty({
+    description: 'Status de disponibilidade do usuário',
+    example: 'online',
+    enum: ['online', 'offline', 'ocupado'],
+  })
+  status: string;
 
   @ApiProperty({
     description: 'ID da empresa do usuário',
