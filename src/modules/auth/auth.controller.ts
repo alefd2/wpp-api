@@ -22,9 +22,9 @@ import {
   ApiDetail,
 } from '../../common/decorators/swagger.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { AbilityService } from '../../common/services/ability.service';
-import { UserAbilitiesDTO } from './dto/ability.dto';
+import { AbilityService } from '../ability/ability.service';
 import { PrismaService } from '../../prisma.service';
+import { UserAbilitiesDTO } from './dto/ability.dto';
 
 @ApiTags('Autenticação')
 @Controller('auth')

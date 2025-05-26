@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AbilityService } from '../../common/services/ability.service';
+import { AbilityService } from './ability.service';
 
 @Module({
   providers: [AbilityService],

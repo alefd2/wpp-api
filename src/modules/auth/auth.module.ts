@@ -10,11 +10,11 @@ import { AbilityModule } from '../ability/ability.module';
 @Module({
   imports: [
     PassportModule,
+    AbilityModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1d' },
     }),
-    AbilityModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, PrismaService],

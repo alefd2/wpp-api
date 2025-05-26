@@ -29,10 +29,14 @@ import { PageOptionsDto } from 'src/common/dto/page-options.dto';
 import { ApiPaginatedResponse } from 'src/common/decorators/paginated.decorator';
 import { PageDto } from 'src/common/dto/page.dto';
 import { BaseController } from '../../base/base.controller';
+import { Action } from '../../../common/enums/action.enum';
+import { Resource } from '../../../common/enums/resource.enum';
+import { AbilityGuard } from 'src/common/guards/ability.guard';
+import { CheckAbility } from 'src/common/decorators/check-ability.decorator';
 
 @ApiTags('Contacts')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AbilityGuard)
 @Controller('contacts')
 export class ContactsController extends BaseController<
   Contact,
@@ -44,6 +48,7 @@ export class ContactsController extends BaseController<
   }
 
   @Get()
+  @CheckAbility({ action: Action.Read, subject: Resource.Contact })
   @ApiPaginatedResponse(ContactResponseDto)
   @ApiList({
     summary: 'Listar todos os contatos',
@@ -73,6 +78,7 @@ export class ContactsController extends BaseController<
   }
 
   @Get('phone/:phone')
+  @CheckAbility({ action: Action.Read, subject: Resource.Contact })
   @ApiDetail({
     summary: 'Buscar contato por telefone',
     description: 'Retorna um contato específico pelo telefone',
@@ -86,6 +92,7 @@ export class ContactsController extends BaseController<
   }
 
   @Get(':id')
+  @CheckAbility({ action: Action.Read, subject: Resource.Contact })
   @ApiDetail({
     summary: 'Buscar contato por ID',
     description: 'Retorna um contato específico pelo ID',
@@ -99,6 +106,7 @@ export class ContactsController extends BaseController<
   }
 
   @Post()
+  @CheckAbility({ action: Action.Create, subject: Resource.Contact })
   @ApiCreate({
     summary: 'Criar novo contato',
     description: 'Cria um novo contato na base de dados',
@@ -113,6 +121,7 @@ export class ContactsController extends BaseController<
   }
 
   @Patch(':id')
+  @CheckAbility({ action: Action.Update, subject: Resource.Contact })
   @ApiUpdate({
     summary: 'Atualizar contato',
     description: 'Atualiza um contato existente na base de dados',
@@ -128,6 +137,7 @@ export class ContactsController extends BaseController<
   }
 
   @Delete(':id')
+  @CheckAbility({ action: Action.Delete, subject: Resource.Contact })
   @ApiRemove({
     summary: 'Remover contato',
     description: 'Remove um contato existente da base de dados',

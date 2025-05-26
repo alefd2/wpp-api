@@ -15,10 +15,13 @@ import { DocsModule } from './modules/docs/docs.module';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
 import { AbilityModule } from './modules/ability/ability.module';
+import { AbilityGuard } from './common/guards/ability.guard';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     BullModule.forRoot({
       redis: {
         host: process.env.REDIS_HOST,
@@ -43,6 +46,10 @@ import { AbilityModule } from './modules/ability/ability.module';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AbilityGuard,
     },
   ],
 })

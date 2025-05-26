@@ -5,9 +5,10 @@ import {
   MongoAbility,
   subject,
 } from '@casl/ability';
-import { Action } from '../enums/action.enum';
-import { Resource } from '../enums/resource.enum';
+import { Action } from '../../common/enums/action.enum';
+import { Resource } from '../../common/enums/resource.enum';
 import { User, DepartmentUser } from '@prisma/client';
+import { UserAbilitiesDTO, AbilityDTO } from '../auth/dto/ability.dto';
 
 type UserWithDepartments = User & {
   departments: DepartmentUser[];
@@ -21,6 +22,7 @@ export class AbilityService {
     const { can, cannot, build } = new AbilityBuilder(createMongoAbility);
 
     if (user.role === 'admin') {
+      // Admin tem todas as permissões em todos os recursos
       can(Action.Manage, Resource.All);
     }
 
@@ -57,46 +59,33 @@ export class AbilityService {
 
       can(
         [Action.Create, Action.Read, Action.Update],
-        [Resource.Ticket, Resource.Message],
+        [Resource.Ticket, Resource.Message, Resource.ContactObservation],
       );
 
-      can(
-        [Action.Create, Action.Read, Action.Delete],
-        Resource.ContactObservation,
-      );
-
-      cannot(Action.Delete, Resource.All);
       cannot(Action.Create, Resource.User);
+      cannot(Action.Delete, Resource.All);
     }
 
     return build();
   }
 
-  getUserAbilities(user: UserWithDepartments) {
+  getUserAbilities(user: UserWithDepartments): UserAbilitiesDTO {
     const ability = this.createForUser(user);
-    const abilities = [];
+    const rules = ability.rules;
 
-    // Lista todos os recursos possíveis
-    const resources = Object.values(Resource).filter((r) => r !== Resource.All);
+    const abilities: AbilityDTO[] = rules.flatMap((rule) => {
+      const actions = Array.isArray(rule.action) ? rule.action : [rule.action];
+      const subjects = Array.isArray(rule.subject)
+        ? rule.subject
+        : [rule.subject];
 
-    // Lista todas as ações possíveis
-    const actions = Object.values(Action).filter((a) => a !== Action.Manage);
-
-    // Para cada combinação de ação e recurso, verifica se o usuário tem permissão
-    for (const resource of resources) {
-      for (const action of actions) {
-        if (ability.can(action, resource)) {
-          abilities.push({ action, subject: resource });
-        }
-      }
-
-      // Verifica se tem permissão de gerenciar (todas as ações)
-      if (ability.can(Action.Manage, resource)) {
-        for (const action of actions) {
-          abilities.push({ action, subject: resource });
-        }
-      }
-    }
+      return actions.flatMap((action) =>
+        subjects.map((subject) => ({
+          action: action as Action,
+          subject: subject as Resource,
+        })),
+      );
+    });
 
     return { abilities };
   }

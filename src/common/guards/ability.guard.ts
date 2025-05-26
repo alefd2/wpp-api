@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AbilityService } from '../services/ability.service';
+import { AbilityService } from '../../modules/ability/ability.service';
 import {
   CHECK_ABILITY,
   RequiredRule,
