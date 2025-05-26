@@ -51,7 +51,9 @@ async function main() {
 
     // Criar usuário admin
     const hashedPassword = await bcrypt.hash('123456', 10);
-    const defaultUser = await prisma.user.upsert({
+
+    // Admin
+    const adminUser = await prisma.user.upsert({
       where: { email: 'admin@admin.com' },
       update: {},
       create: {
@@ -59,21 +61,64 @@ async function main() {
         email: 'admin@admin.com',
         password: hashedPassword,
         companyId: defaultCompany.id,
+        role: 'admin',
         active: true,
       },
     });
 
-    console.log('Usuário admin criado:', defaultUser);
+    console.log('Usuário admin criado:', adminUser);
 
-    // Vincular usuário ao departamento
-    const departmentUser = await prisma.departmentUser.create({
-      data: {
-        userId: defaultUser.id,
-        departmentId: defaultDepartment.id,
+    // Manager
+    const managerUser = await prisma.user.upsert({
+      where: { email: 'manager@example.com' },
+      update: {},
+      create: {
+        name: 'Manager',
+        email: 'manager@example.com',
+        password: hashedPassword,
+        companyId: defaultCompany.id,
+        role: 'manager',
+        active: true,
       },
     });
 
-    console.log('Vínculo usuário-departamento criado:', departmentUser);
+    console.log('Usuário manager criado:', managerUser);
+
+    // Attendant
+    const attendantUser = await prisma.user.upsert({
+      where: { email: 'attendant@example.com' },
+      update: {},
+      create: {
+        name: 'Attendant',
+        email: 'attendant@example.com',
+        password: hashedPassword,
+        companyId: defaultCompany.id,
+        role: 'attendant',
+        active: true,
+      },
+    });
+
+    console.log('Usuário attendant criado:', attendantUser);
+
+    // Vincular usuários ao departamento
+    await prisma.departmentUser.createMany({
+      data: [
+        {
+          userId: adminUser.id,
+          departmentId: defaultDepartment.id,
+        },
+        {
+          userId: managerUser.id,
+          departmentId: defaultDepartment.id,
+        },
+        {
+          userId: attendantUser.id,
+          departmentId: defaultDepartment.id,
+        },
+      ],
+    });
+
+    console.log('Vínculos usuário-departamento criados');
 
     // Criar configuração de horário comercial
     const businessHours = await prisma.businessHours.create({
@@ -114,17 +159,68 @@ async function main() {
     }
 
     console.log('Horários comerciais criados:', businessHours);
+
+    // Criar empresa de teste
+    const company = await prisma.company.upsert({
+      where: { id: 1 },
+      update: {},
+      create: {
+        name: 'Empresa Teste',
+        planId: 1,
+        active: true,
+      },
+    });
+
+    // Criar usuários de teste
+    const password = await bcrypt.hash('123456', 10);
+
+    // Admin
+    await prisma.user.upsert({
+      where: { email: 'admin@example.com' },
+      update: {},
+      create: {
+        name: 'Admin',
+        email: 'admin@example.com',
+        password,
+        role: 'admin',
+        companyId: company.id,
+        active: true,
+      },
+    });
+
+    // Manager
+    await prisma.user.upsert({
+      where: { email: 'manager@example.com' },
+      update: {},
+      create: {
+        name: 'Manager',
+        email: 'manager@example.com',
+        password,
+        role: 'manager',
+        companyId: company.id,
+        active: true,
+      },
+    });
+
+    // Attendant
+    await prisma.user.upsert({
+      where: { email: 'attendant@example.com' },
+      update: {},
+      create: {
+        name: 'Attendant',
+        email: 'attendant@example.com',
+        password,
+        role: 'attendant',
+        companyId: company.id,
+        active: true,
+      },
+    });
   } catch (error) {
     console.error('Erro durante o seed:', error);
     throw error;
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+main();

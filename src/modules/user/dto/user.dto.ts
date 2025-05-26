@@ -5,8 +5,20 @@ import {
   MinLength,
   IsBoolean,
   IsOptional,
+  IsNotEmpty,
+  IsEnum,
 } from 'class-validator';
-import { BaseResponseDto, BaseCreateDto } from '../../base/dto/base.dto';
+import {
+  BaseResponseDto,
+  BaseCreateDto,
+  BaseUpdateDto,
+} from '../../base/dto/base.dto';
+
+export enum UserRole {
+  ADMIN = 'admin',
+  MANAGER = 'manager',
+  ATTENDANT = 'attendant',
+}
 
 export class DepartmentResponseDto {
   @ApiProperty({
@@ -34,13 +46,15 @@ export class CreateUserDto extends BaseCreateDto {
     example: 'John Doe',
   })
   @IsString()
+  @IsNotEmpty()
   name: string;
 
   @ApiProperty({
     description: 'Email do usuário',
     example: 'john@example.com',
   })
-  @IsEmail({}, { message: 'Email inválido' })
+  @IsEmail()
+  @IsNotEmpty()
   email: string;
 
   @ApiProperty({
@@ -48,11 +62,30 @@ export class CreateUserDto extends BaseCreateDto {
     example: '123456',
   })
   @IsString()
-  @MinLength(6, { message: 'A senha deve ter no mínimo 6 caracteres' })
+  @IsNotEmpty()
   password: string;
+
+  @ApiProperty({
+    description: 'Status do usuário',
+    example: true,
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  active?: boolean = true;
+
+  @ApiProperty({
+    description: 'Papel do usuário no sistema',
+    enum: UserRole,
+    example: UserRole.ATTENDANT,
+    default: UserRole.ATTENDANT,
+  })
+  @IsOptional()
+  @IsEnum(UserRole)
+  role?: UserRole = UserRole.ATTENDANT;
 }
 
-export class UpdateUserDto {
+export class UpdateUserDto extends BaseUpdateDto {
   @ApiProperty({
     description: 'Nome do usuário',
     example: 'John Doe',
@@ -67,7 +100,7 @@ export class UpdateUserDto {
     example: 'john@example.com',
     required: false,
   })
-  @IsEmail({}, { message: 'Email inválido' })
+  @IsEmail()
   @IsOptional()
   email?: string;
 
@@ -77,7 +110,6 @@ export class UpdateUserDto {
     required: false,
   })
   @IsString()
-  @MinLength(6, { message: 'A senha deve ter no mínimo 6 caracteres' })
   @IsOptional()
   password?: string;
 
@@ -99,6 +131,16 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   status?: string;
+
+  @ApiProperty({
+    description: 'Papel do usuário no sistema',
+    enum: UserRole,
+    example: UserRole.ATTENDANT,
+    required: false,
+  })
+  @IsEnum(UserRole)
+  @IsOptional()
+  role?: UserRole;
 }
 
 export class UserResponseDto extends BaseResponseDto {
@@ -126,6 +168,13 @@ export class UserResponseDto extends BaseResponseDto {
     enum: ['online', 'offline', 'ocupado'],
   })
   status: string;
+
+  @ApiProperty({
+    description: 'Papel do usuário no sistema',
+    example: UserRole.ATTENDANT,
+    enum: UserRole,
+  })
+  role: UserRole;
 
   @ApiProperty({
     description: 'ID da empresa do usuário',

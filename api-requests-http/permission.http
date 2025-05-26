@@ -1,0 +1,138 @@
+### Variáveis
+@baseUrl = http://localhost:3000/api/v1
+@phone = 5585998546812
+@companyId = 1
+@token = 
+@channelId = 7
+
+
+### ####################### TESTES DE PERMISSÃO #######################
+
+### Login como Admin
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "admin@admin.com",
+    "password": "123456"
+}
+
+### Salvar token admin
+@adminToken = {{loginAdmin.response.body.access_token}}
+
+### Login como Manager
+# @name loginManager
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "manager@example.com",
+    "password": "123456"
+}
+
+### Salvar token manager
+@managerToken = {{loginManager.response.body.access_token}}
+
+### Login como Attendant
+# @name loginAttendant
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "attendant@example.com",
+    "password": "123456"
+}
+
+### Salvar token attendant
+@attendantToken = {{loginAttendant.response.body.access_token}}
+
+### 1. Admin tenta criar usuário (deve funcionar)
+POST {{baseUrl}}/users
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+    "name": "Novo Usuário",
+    "email": "novo@example.com",
+    "password": "123456",
+    "role": "attendant",
+    "companyId": 1
+}
+
+### 2. Manager tenta criar usuário (deve funcionar)
+POST {{baseUrl}}/users
+Authorization: Bearer {{managerToken}}
+Content-Type: application/json
+
+{
+    "name": "Usuário do Manager",
+    "email": "manager.novo@example.com",
+    "password": "123456",
+    "role": "attendant",
+    "companyId": 1
+}
+
+### 3. Attendant tenta criar usuário (não deve funcionar)
+POST {{baseUrl}}/users
+Authorization: Bearer {{attendantToken}}
+Content-Type: application/json
+
+{
+    "name": "Tentativa Usuário",
+    "email": "tentativa@example.com",
+    "password": "123456",
+    "role": "attendant",
+    "companyId": 1
+}
+
+### 4. Admin tenta deletar usuário (deve funcionar)
+DELETE {{baseUrl}}/users/3
+Authorization: Bearer {{adminToken}}
+
+### 5. Manager tenta deletar usuário (não deve funcionar)
+DELETE {{baseUrl}}/users/3
+Authorization: Bearer {{managerToken}}
+
+### 6. Todos podem listar usuários
+# Admin
+GET {{baseUrl}}/users?page=1&take=10&order=asc&search=
+Authorization: Bearer {{adminToken}}
+
+### Manager lista
+GET {{baseUrl}}/users?page=1&take=10&order=asc&search=
+Authorization: Bearer {{managerToken}}
+
+### Attendant lista
+GET {{baseUrl}}/users?page=1&take=10&order=asc&search=
+Authorization: Bearer {{attendantToken}}
+
+### 7. Teste de Tickets (Attendant)
+# Attendant pode criar ticket
+POST {{baseUrl}}/tickets
+Authorization: Bearer {{attendantToken}}
+Content-Type: application/json
+
+{
+    "contactId": 1,
+    "departmentId": 1,
+    "priority": "normal",
+    "status": "open"
+}
+
+### 8. Teste de Observações (Attendant)
+# Attendant pode criar observação
+POST {{baseUrl}}/contact-observations
+Authorization: Bearer {{attendantToken}}
+Content-Type: application/json
+
+{
+    "content": "Observação de teste",
+    "contactId": 1
+}
+
+
+### 8. Teste de Observações (Attendant)
+# Attendant pode criar observação
+DELETE  {{baseUrl}}/contact-observations/9
+Authorization: Bearer {{attendantToken}}

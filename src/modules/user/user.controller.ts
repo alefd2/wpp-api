@@ -17,6 +17,10 @@ import { User } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto/user.dto';
 import { CompanyId } from '../../common/decorators/company.decorator';
+import { CheckAbility } from '../../common/decorators/check-ability.decorator';
+import { AbilityGuard } from '../../common/guards/ability.guard';
+import { Action } from '../../common/enums/action.enum';
+import { Resource } from '../../common/enums/resource.enum';
 import {
   ApiList,
   ApiDetail,
@@ -29,7 +33,7 @@ import { PageDto } from 'src/common/dto/page.dto';
 
 @ApiTags('Usuários')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AbilityGuard)
 @Controller('users')
 export class UserController extends BaseController<
   User,
@@ -41,6 +45,7 @@ export class UserController extends BaseController<
   }
 
   @Get()
+  @CheckAbility({ action: Action.Read, subject: Resource.User })
   @ApiList({
     summary: 'Listar todos os usuários',
     description: 'Retorna uma lista de todos os usuários da empresa',
@@ -55,6 +60,7 @@ export class UserController extends BaseController<
   }
 
   @Get(':id')
+  @CheckAbility({ action: Action.Read, subject: Resource.User })
   @ApiDetail({
     summary: 'Buscar usuário por ID',
     description: 'Retorna um usuário específico pelo ID',
@@ -68,6 +74,7 @@ export class UserController extends BaseController<
   }
 
   @Post()
+  @CheckAbility({ action: Action.Create, subject: Resource.User })
   @ApiCreate({
     summary: 'Criar novo usuário',
     description: 'Cria um novo usuário na empresa',
@@ -79,6 +86,7 @@ export class UserController extends BaseController<
   }
 
   @Patch(':id')
+  @CheckAbility({ action: Action.Update, subject: Resource.User })
   @ApiUpdate({
     summary: 'Atualizar usuário',
     description: 'Atualiza os dados de um usuário existente',
@@ -94,6 +102,7 @@ export class UserController extends BaseController<
   }
 
   @Delete(':id')
+  @CheckAbility({ action: Action.Delete, subject: Resource.User })
   @ApiRemove({
     summary: 'Remover usuário',
     description: 'Remove um usuário da empresa',

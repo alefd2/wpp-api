@@ -3,7 +3,7 @@ import { BaseService } from '../base/base.service';
 import { PrismaService } from '../../prisma.service';
 import * as bcrypt from 'bcrypt';
 import { Prisma, User } from '@prisma/client';
-import { CreateUserDto } from './dto/user.dto';
+import { CreateUserDto, UserRole } from './dto/user.dto';
 import { PageDto } from 'src/common/dto/page.dto';
 import { PageOptionsDto } from 'src/common/dto/page-options.dto';
 import { PageMetaDto } from 'src/common/dto/page-meta.dto';
@@ -106,6 +106,7 @@ export class UserService extends BaseService<User> {
       data: {
         ...data,
         password: hashedPassword,
+        role: data.role || UserRole.ATTENDANT,
       },
       include: {
         departments: {

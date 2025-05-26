@@ -31,6 +31,8 @@
     "@bull-board/api": "^6.9.6",
     "@bull-board/express": "^6.9.6",
     "@bull-board/nestjs": "^6.9.6",
+    "@casl/ability": "^6.7.3",
+    "@casl/prisma": "^1.5.1",
     "@nestjs/bull": "^11.0.2",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^4.0.2",

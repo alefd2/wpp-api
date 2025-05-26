@@ -1,0 +1,15 @@
+export enum Resource {
+  All = 'all',
+  User = 'user',
+  Company = 'company',
+  Department = 'department',
+  Contact = 'contact',
+  Ticket = 'ticket',
+  Message = 'message',
+  Channel = 'channel',
+  Whatsapp = 'whatsapp',
+  Tag = 'tag',
+  QuickResponse = 'quick_response',
+  MessageTemplate = 'message_template',
+  ContactObservation = 'contact_observation',
+}

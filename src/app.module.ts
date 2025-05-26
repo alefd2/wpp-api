@@ -12,20 +12,22 @@ import { ContactsModule } from './modules/contacts/contacts.module';
 import { TagModule } from './modules/tags/tag.module';
 import { DocsModule } from './modules/docs/docs.module';
 
+import { BullBoardModule } from '@bull-board/nestjs';
+import { ExpressAdapter } from '@bull-board/express';
+import { AbilityModule } from './modules/ability/ability.module';
+
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+    ConfigModule.forRoot(),
     BullModule.forRoot({
       redis: {
-        host: 'localhost',
-        port: 6379,
+        host: process.env.REDIS_HOST,
+        port: parseInt(process.env.REDIS_PORT, 10),
       },
-      defaultJobOptions: {
-        removeOnComplete: true,
-        removeOnFail: false,
-      },
+    }),
+    BullBoardModule.forRoot({
+      route: '/queues',
+      adapter: ExpressAdapter,
     }),
     AuthModule,
     WhatsappModule,
@@ -33,6 +35,7 @@ import { DocsModule } from './modules/docs/docs.module';
     ContactsModule,
     TagModule,
     DocsModule,
+    AbilityModule,
   ],
   controllers: [AppController],
   providers: [

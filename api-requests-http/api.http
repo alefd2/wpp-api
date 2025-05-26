@@ -91,6 +91,7 @@ Authorization: Bearer {{token}}
 
 
 
+
 ####################### Canais do WhatsApp (TESTADO E FUNCIONANDO) #######################
 
 ### 1. Criar novo canal
@@ -378,3 +379,4 @@ Content-Type: application/json
 {
   "content": "Cliente solicitou mais informações sobre o produto X. Preciso verificar com o setor de vendas."
 }
+

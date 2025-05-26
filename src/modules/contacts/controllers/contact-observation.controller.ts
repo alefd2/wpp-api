@@ -27,6 +27,10 @@ import { ContactObservation } from '@prisma/client';
 import { ApiPaginatedResponse } from 'src/common/decorators/paginated.decorator';
 import { ApiCreate, ApiList } from 'src/common/decorators/swagger.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { AbilityGuard } from 'src/common/guards/ability.guard';
+import { CheckAbility } from 'src/common/decorators/check-ability.decorator';
+import { Action } from 'src/common/enums/action.enum';
+import { Resource } from 'src/common/enums/resource.enum';
 import { PageOptionsDto } from 'src/common/dto/page-options.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CompanyId } from 'src/common/decorators/company.decorator';
@@ -35,7 +39,7 @@ import { User } from '@prisma/client';
 
 @ApiTags('Contact Observations')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AbilityGuard)
 @Controller('contact-observations')
 export class ContactObservationController extends BaseController<
   ContactObservation,
@@ -47,6 +51,7 @@ export class ContactObservationController extends BaseController<
   }
 
   @Post()
+  @CheckAbility({ action: Action.Create, subject: Resource.ContactObservation })
   @ApiCreate({
     summary: 'Create a new contact observation',
     response: { type: ContactObservationDTO },
@@ -64,6 +69,7 @@ export class ContactObservationController extends BaseController<
   }
 
   @Get('by-contact')
+  @CheckAbility({ action: Action.Read, subject: Resource.ContactObservation })
   @ApiPaginatedResponse(ContactObservationDTO)
   @ApiList({
     summary: 'Get all observations for a contact',
@@ -80,6 +86,7 @@ export class ContactObservationController extends BaseController<
   }
 
   @Get()
+  @CheckAbility({ action: Action.Read, subject: Resource.ContactObservation })
   @ApiPaginatedResponse(ContactObservationDTO)
   @ApiList({
     summary: 'Get all observations',
@@ -98,6 +105,7 @@ export class ContactObservationController extends BaseController<
   }
 
   @Get(':id')
+  @CheckAbility({ action: Action.Read, subject: Resource.ContactObservation })
   @ApiOperation({ summary: 'Get a specific observation' })
   @ApiResponse({
     status: 200,
@@ -112,6 +120,7 @@ export class ContactObservationController extends BaseController<
   }
 
   @Patch(':id')
+  @CheckAbility({ action: Action.Update, subject: Resource.ContactObservation })
   @ApiOperation({ summary: 'Update a contact observation' })
   @ApiResponse({
     status: 200,
@@ -127,6 +136,7 @@ export class ContactObservationController extends BaseController<
   }
 
   @Delete(':id')
+  @CheckAbility({ action: Action.Delete, subject: Resource.ContactObservation })
   @ApiOperation({ summary: 'Delete a contact observation' })
   @ApiResponse({
     status: 200,

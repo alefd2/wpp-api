@@ -5,10 +5,7 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private prisma: PrismaService,
-    private jwtService: JwtService,
-  ) {}
+  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
 
   async validateUser(email: string, password: string) {
     const user = await this.prisma.user.findUnique({
@@ -41,6 +38,7 @@ export class AuthService {
       email: user.email,
       sub: user.id,
       companyId: user.companyId,
+      role: user.role,
     };
 
     // Criar sessão
