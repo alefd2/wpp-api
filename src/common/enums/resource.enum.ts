@@ -12,4 +12,7 @@ export enum Resource {
   QuickResponse = 'quick_response',
   MessageTemplate = 'message_template',
   ContactObservation = 'contact_observation',
+  Financial = 'financial',
+  Conversation = 'conversation',
+  Report = 'report',
 }
