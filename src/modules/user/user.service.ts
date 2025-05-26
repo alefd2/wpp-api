@@ -2,8 +2,11 @@ import { Injectable, ConflictException } from '@nestjs/common';
 import { BaseService } from '../base/base.service';
 import { PrismaService } from '../../prisma.service';
 import * as bcrypt from 'bcrypt';
-import { User } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { CreateUserDto } from './dto/user.dto';
+import { PageDto } from 'src/common/dto/page.dto';
+import { PageOptionsDto } from 'src/common/dto/page-options.dto';
+import { PageMetaDto } from 'src/common/dto/page-meta.dto';
 
 @Injectable()
 export class UserService extends BaseService<User> {
@@ -13,6 +16,10 @@ export class UserService extends BaseService<User> {
 
   protected getModelName(): string {
     return 'user';
+  }
+
+  protected getSearchFields(): string[] {
+    return ['name', 'email'];
   }
 
   async findAll(companyId: number) {
@@ -26,6 +33,44 @@ export class UserService extends BaseService<User> {
         },
       },
     });
+  }
+
+  async searchPaginated(
+    companyId: number,
+    query: string,
+    pageOptionsDto: PageOptionsDto,
+  ): Promise<PageDto<User>> {
+    const where: Prisma.UserWhereInput = {
+      companyId,
+      OR: [
+        {
+          name: {
+            contains: query,
+            mode: Prisma.QueryMode.insensitive,
+          },
+        },
+        {
+          email: {
+            contains: query,
+            mode: Prisma.QueryMode.insensitive,
+          },
+        },
+      ],
+    };
+
+    const skip = (pageOptionsDto.page - 1) * Number(pageOptionsDto.take);
+    const itemCount = await this.prisma.user.count({ where });
+    const users = await this.prisma.user.findMany({
+      where,
+      skip,
+      take: Number(pageOptionsDto.take),
+      orderBy: {
+        name: pageOptionsDto.order,
+      },
+    });
+
+    const pageMetaDto = new PageMetaDto(pageOptionsDto, itemCount);
+    return new PageDto(users, pageMetaDto);
   }
 
   async findOne(id: number, companyId: number) {

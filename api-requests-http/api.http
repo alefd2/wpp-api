@@ -21,7 +21,7 @@ Content-Type: application/json
 @token = {{login.response.body.access_token}}
 
 ### Listar usuários
-GET {{baseUrl}}/users
+GET {{baseUrl}}/users?page=1&take=10&order=asc&search=
 Authorization: Bearer {{token}}
 
 ### Buscar usuário por ID

@@ -8,6 +8,7 @@ import {
   Post,
   Patch,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { BaseController } from '../base/base.controller';
@@ -23,6 +24,8 @@ import {
   ApiUpdate,
   ApiRemove,
 } from '../../common/decorators/swagger.decorator';
+import { PageOptionsDto } from 'src/common/dto/page-options.dto';
+import { PageDto } from 'src/common/dto/page.dto';
 
 @ApiTags('Usuários')
 @ApiBearerAuth()
@@ -43,8 +46,12 @@ export class UserController extends BaseController<
     description: 'Retorna uma lista de todos os usuários da empresa',
     response: { type: UserResponseDto, isArray: true },
   })
-  findAll(@CompanyId() companyId: number) {
-    return this.userService.findAll(companyId);
+  findAll(
+    @CompanyId() companyId: number,
+    @Query() pageOptionsDto: PageOptionsDto,
+    @Query('search') search?: string,
+  ): Promise<PageDto<User>> {
+    return this.userService.searchPaginated(companyId, search, pageOptionsDto);
   }
 
   @Get(':id')
