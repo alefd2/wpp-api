@@ -21,7 +21,6 @@ import {
   ApiCreate,
   ApiDetail,
 } from '../../common/decorators/swagger.decorator';
-import { LocalAuthGuard } from '../../common/guards/local-auth.guard';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AbilityService } from '../../common/services/ability.service';
 import { UserAbilitiesDTO } from './dto/ability.dto';
