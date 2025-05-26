@@ -3,6 +3,7 @@ import {
   AbilityBuilder,
   createMongoAbility,
   MongoAbility,
+  subject,
 } from '@casl/ability';
 import { Action } from '../enums/action.enum';
 import { Resource } from '../enums/resource.enum';
@@ -56,7 +57,7 @@ export class AbilityService {
 
       can(
         [Action.Create, Action.Read, Action.Update],
-        [Resource.Ticket, Resource.Message, Resource.ContactObservation],
+        [Resource.Ticket, Resource.Message],
       );
 
       can(
@@ -64,9 +65,39 @@ export class AbilityService {
         Resource.ContactObservation,
       );
 
+      cannot(Action.Delete, Resource.All);
       cannot(Action.Create, Resource.User);
     }
 
     return build();
+  }
+
+  getUserAbilities(user: UserWithDepartments) {
+    const ability = this.createForUser(user);
+    const abilities = [];
+
+    // Lista todos os recursos possíveis
+    const resources = Object.values(Resource).filter((r) => r !== Resource.All);
+
+    // Lista todas as ações possíveis
+    const actions = Object.values(Action).filter((a) => a !== Action.Manage);
+
+    // Para cada combinação de ação e recurso, verifica se o usuário tem permissão
+    for (const resource of resources) {
+      for (const action of actions) {
+        if (ability.can(action, resource)) {
+          abilities.push({ action, subject: resource });
+        }
+      }
+
+      // Verifica se tem permissão de gerenciar (todas as ações)
+      if (ability.can(Action.Manage, resource)) {
+        for (const action of actions) {
+          abilities.push({ action, subject: resource });
+        }
+      }
+    }
+
+    return { abilities };
   }
 }

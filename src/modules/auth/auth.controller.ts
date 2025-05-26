@@ -1,19 +1,40 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  UseGuards,
+  Request,
+  Body,
+  Get,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/company.decorator';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { LoginDto, AuthResponseDto, LogoutResponseDto } from './dto/auth.dto';
 import { UserResponseDto } from '../user/dto/user.dto';
 import {
   ApiCreate,
   ApiDetail,
 } from '../../common/decorators/swagger.decorator';
+import { LocalAuthGuard } from '../../common/guards/local-auth.guard';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { AbilityService } from '../../common/services/ability.service';
+import { UserAbilitiesDTO } from './dto/ability.dto';
+import { PrismaService } from '../../prisma.service';
 
 @ApiTags('Autenticação')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private abilityService: AbilityService,
+    private prisma: PrismaService,
+  ) {}
 
   @Public()
   @Post('login')
@@ -23,7 +44,12 @@ export class AuthController {
     request: LoginDto,
     response: { type: AuthResponseDto },
   })
-  async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
+  @ApiOperation({ summary: 'Login do usuário' })
+  @ApiResponse({
+    status: 200,
+    description: 'Retorna o token de acesso',
+  })
+  async login(@Body() loginDto: LoginDto, @Request() req) {
     const user = await this.authService.validateUser(
       loginDto.email,
       loginDto.password,
@@ -52,5 +78,24 @@ export class AuthController {
   })
   async me(@CurrentUser() user: any): Promise<UserResponseDto> {
     return user;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('abilities')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Retorna as permissões do usuário' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de permissões do usuário',
+    type: UserAbilitiesDTO,
+  })
+  async getAbilities(@Request() req) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: {
+        departments: true,
+      },
+    });
+    return this.abilityService.getUserAbilities(user);
   }
 }
