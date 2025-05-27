@@ -1,10 +1,7 @@
-import { Injectable, ExecutionContext, SetMetadata } from '@nestjs/common';
+import { ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
-import { SKIP_AUTH_KEY } from '../decorators/skip-auth.decorator';
-
-export const IS_PUBLIC_KEY = 'isPublic';
-export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -13,19 +10,15 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   }
 
   canActivate(context: ExecutionContext) {
-    const skipAuth = this.reflector.getAllAndOverride<boolean>(SKIP_AUTH_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-
-    if (skipAuth) {
-      return true;
-    }
-
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
+
+    const request = context.switchToHttp().getRequest();
+    if (request.url.startsWith('/api/v1/queues')) {
+      return true;
+    }
 
     if (isPublic) {
       return true;

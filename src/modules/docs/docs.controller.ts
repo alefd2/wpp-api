@@ -1,7 +1,7 @@
 import { Controller, Get, Header, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { DocsService } from './docs.service';
-import { Public } from 'src/common/guards/jwt-auth.guard';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Documentation')
 @Controller('docs')

@@ -20,7 +20,6 @@ export class WhatsappWebhookService {
   constructor(
     private readonly prisma: PrismaService,
     @InjectQueue('whatsapp-messages') private readonly messageQueue: Queue,
-    private readonly messageService: WhatsappMessageService,
   ) {}
 
   async verifyToken(token: string, companyId: number): Promise<void> {
@@ -143,86 +142,53 @@ export class WhatsappWebhookService {
   private async processStatusUpdates(statuses: any[]) {
     for (const status of statuses) {
       try {
-        this.logger.debug('Processando status update:', {
-          messageId: status.id,
-          status: status.status,
-          timestamp: status.timestamp,
-          recipientId: status.recipient_id,
-        });
+        this.logger.log(`[WEBHOOK] Processando status ${status.id}`);
 
-        // Busca a mensagem no banco
-        const message = await this.prisma.message.findFirst({
-          where: { messageId: status.id },
-        });
-
-        if (!message) {
-          this.logger.warn(
-            `Mensagem não encontrada para status update: ${status.id}`,
-            {
-              status: status.status,
-              recipientId: status.recipient_id,
-            },
-          );
-          continue;
-        }
-
-        // Mapeia o status do WhatsApp para nosso formato
-        const mappedStatus = this.mapWhatsAppStatus(status.status);
-
-        this.logger.debug(`Atualizando status da mensagem ${message.id}`, {
-          oldStatus: message.status,
-          newStatus: mappedStatus,
-          messageId: status.id,
-        });
-
-        // Atualiza o status da mensagem
-        const updatedMessage = await this.prisma.message.update({
-          where: { id: message.id },
-          data: {
-            status: mappedStatus,
-            timestamp: new Date(Number(status.timestamp) * 1000),
-          },
-        });
-
-        this.logger.log(
-          `Status atualizado com sucesso: ${status.id} -> ${mappedStatus}`,
+        const job = await this.messageQueue.add(
+          'status',
           {
-            messageId: message.id,
-            oldStatus: message.status,
-            newStatus: mappedStatus,
-            timestamp: new Date(Number(status.timestamp) * 1000),
+            messageId: status.id,
+            status: status.status,
+            timestamp: status.timestamp,
+            recipientId: status.recipient_id,
+          },
+          {
+            attempts: 3,
+            backoff: {
+              type: 'exponential',
+              delay: 1000,
+            },
+            removeOnComplete: {
+              age: 24 * 3600,
+              count: 1000,
+            },
+            removeOnFail: {
+              age: 24 * 3600,
+              count: 1000,
+            },
           },
         );
-      } catch (error) {
-        this.logger.error(`Erro ao processar status ${status.id}:`, {
-          error: error.message,
+
+        this.logger.log(`[WEBHOOK] Status ${status.id} adicionado à fila`, {
+          jobId: job.id,
+          messageId: status.id,
           status: status.status,
-          recipientId: status.recipient_id,
+        });
+      } catch (error) {
+        this.logger.error(`[WEBHOOK] Erro ao processar status ${status.id}:`, {
+          error: error.message,
           stack: error.stack,
         });
       }
     }
   }
 
-  private mapWhatsAppStatus(whatsappStatus: string): string {
-    switch (whatsappStatus.toLowerCase()) {
-      case 'sent':
-        return 'SENT';
-      case 'delivered':
-        return 'DELIVERED';
-      case 'read':
-        return 'READ';
-      case 'failed':
-        return 'FAILED';
-      default:
-        return 'PENDING';
-    }
-  }
-
-  /* stage 1° - processar webhook */
+  /* stage 2° - processar webhook e mandar para fila */
   private async processMessages(messages: any[]) {
     for (const message of messages) {
       try {
+        this.logger.log(`[WEBHOOK] Processando mensagem ${message.id}`);
+
         const channel = await this.prisma.channel.findFirst({
           where: {
             fbNumberPhoneId: message.metadata?.phone_number_id,
@@ -232,13 +198,62 @@ export class WhatsappWebhookService {
         });
 
         if (!channel) {
-          this.logger.warn(`Canal não encontrado para mensagem ${message.id}`);
+          this.logger.warn(
+            `[WEBHOOK] Canal não encontrado para mensagem ${message.id}`,
+            {
+              phoneNumberId: message.metadata?.phone_number_id,
+              messageId: message.id,
+            },
+          );
           continue;
         }
-        /* stage 2° - processar webhook */
-        await this.messageService.processInboundMessage(message, channel.id);
+
+        this.logger.log(
+          `[WEBHOOK] Canal encontrado para mensagem ${message.id}`,
+          {
+            channelId: channel.id,
+            messageId: message.id,
+          },
+        );
+
+        // Adiciona à fila
+        const job = await this.messageQueue.add(
+          'receive',
+          {
+            message,
+            channelId: channel.id,
+            metadata: message.metadata,
+          },
+          {
+            attempts: 3,
+            backoff: {
+              type: 'exponential',
+              delay: 1000,
+            },
+            removeOnComplete: {
+              age: 24 * 3600,
+              count: 1000,
+            },
+            removeOnFail: {
+              age: 24 * 3600,
+              count: 1000,
+            },
+          },
+        );
+
+        this.logger.log(`[WEBHOOK] Mensagem ${message.id} adicionada à fila`, {
+          jobId: job.id,
+          messageId: message.id,
+          channelId: channel.id,
+        });
       } catch (error) {
-        this.logger.error(`Erro ao processar mensagem ${message.id}:`, error);
+        this.logger.error(
+          `[WEBHOOK] Erro ao processar mensagem ${message.id}:`,
+          {
+            error: error.message,
+            stack: error.stack,
+          },
+        );
       }
     }
   }

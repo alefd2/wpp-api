@@ -15,11 +15,27 @@ import { ChannelController } from './channel/channel.controller';
 import { ChannelService } from './channel/channel.service';
 import { TicketService } from './tickets/ticket.service';
 import { TicketController } from './tickets/ticket.controller';
+import { WhatsappMessageProcessor } from './processors/whatsapp-message.processor';
 
 @Module({
   imports: [
     BullModule.registerQueue({
       name: 'whatsapp-messages',
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 1000,
+        },
+        removeOnComplete: {
+          age: 24 * 3600,
+          count: 1000,
+        },
+        removeOnFail: {
+          age: 24 * 3600,
+          count: 1000,
+        },
+      },
     }),
   ],
   controllers: [
@@ -38,6 +54,7 @@ import { TicketController } from './tickets/ticket.controller';
     ChannelService,
     MessageService,
     PrismaService,
+    WhatsappMessageProcessor,
     TicketService,
   ],
   exports: [

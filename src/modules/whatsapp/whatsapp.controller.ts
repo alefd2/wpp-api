@@ -17,8 +17,8 @@ import { WhatsappAuthDto } from './dto/whatsapp-auth.dto';
 import { WhatsappWebhookService } from './services/whatsapp-webhook.service';
 import { WhatsappWebhookDto } from './interfaces/webhook.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from 'src/common/guards/jwt-auth.guard';
 import { Logger } from '@nestjs/common';
+import { Public } from '../../common/decorators/public.decorator';
 
 @Controller('whatsapp')
 export class WhatsappController {
@@ -62,18 +62,32 @@ export class WhatsappController {
     @Body() data: WhatsappWebhookDto,
   ) {
     try {
-      this.logger.debug(
-        `Received webhook for post company ${companyId}:`,
-        data,
+      this.logger.log(
+        `[WEBHOOK] Recebido webhook POST para company ${companyId}`,
+        {
+          object: data.object,
+          entryCount: data?.entry?.length || 0,
+          hasMessages:
+            data?.entry?.[0]?.changes?.[0]?.value?.messages?.length > 0,
+          hasStatuses:
+            data?.entry?.[0]?.changes?.[0]?.value?.statuses?.length > 0,
+        },
       );
-      return await this.webhookService.processWebhook(
+
+      const result = await this.webhookService.processWebhook(
         data,
         parseInt(companyId),
       );
+
+      this.logger.log(`[WEBHOOK] Processamento concluído`, result);
+      return result;
     } catch (error) {
       this.logger.error(
-        `Error processing webhook for company ${companyId}:`,
-        error,
+        `[WEBHOOK] Erro processando webhook para company ${companyId}:`,
+        {
+          error: error.message,
+          stack: error.stack,
+        },
       );
       throw error;
     }

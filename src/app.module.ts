@@ -2,6 +2,10 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { BullModule } from '@nestjs/bull';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { ExpressAdapter } from '@bull-board/express';
+import { BullAdapter } from '@bull-board/api/bullAdapter';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
@@ -11,9 +15,6 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { TagModule } from './modules/tags/tag.module';
 import { DocsModule } from './modules/docs/docs.module';
-
-import { BullBoardModule } from '@bull-board/nestjs';
-import { ExpressAdapter } from '@bull-board/express';
 import { AbilityModule } from './modules/ability/ability.module';
 import { AbilityGuard } from './common/guards/ability.guard';
 
@@ -24,11 +25,11 @@ import { AbilityGuard } from './common/guards/ability.guard';
     }),
     BullModule.forRoot({
       redis: {
-        host: process.env.REDIS_HOST,
-        port: parseInt(process.env.REDIS_PORT, 10),
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379', 10),
       },
       defaultJobOptions: {
-        removeOnComplete: 100,
+        removeOnComplete: 1000,
         removeOnFail: 1000,
         attempts: 3,
         backoff: {
@@ -40,6 +41,10 @@ import { AbilityGuard } from './common/guards/ability.guard';
     BullBoardModule.forRoot({
       route: '/queues',
       adapter: ExpressAdapter,
+    }),
+    BullBoardModule.forFeature({
+      name: 'whatsapp-messages',
+      adapter: BullAdapter,
     }),
     AuthModule,
     WhatsappModule,
