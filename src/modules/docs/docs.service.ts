@@ -52,6 +52,14 @@ export class DocsService {
         description: 'Como configurar canais de WhatsApp',
       },
       {
+        id: 'channel-setup',
+        title: 'Configuração de Canais',
+        file: 'channel-setup.md',
+        category: 'Configuração',
+        icon: '📞',
+        description: 'Como configurar canais de WhatsApp',
+      },
+      {
         id: 'agent-management',
         title: 'Gestão de Atendentes',
         file: 'agent-management.md',
@@ -73,6 +81,13 @@ export class DocsService {
         file: 'channel-flow.md',
         category: 'Flows',
         description: 'Fluxo dos chennels ',
+      },
+      {
+        id: 'message-flow',
+        title: 'Fluxo das mensagens e filas',
+        file: 'whatsapp-message-flow.md',
+        category: 'Flows',
+        description: 'Fluxo das mensagens ',
       },
       {
         id: 'message-types',
