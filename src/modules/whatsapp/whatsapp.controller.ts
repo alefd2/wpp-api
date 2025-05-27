@@ -10,7 +10,6 @@ import {
   HttpCode,
   UnauthorizedException,
   Res,
-  SetMetadata,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { WhatsappAuthService } from './services/whatsapp-auth.service';
@@ -18,8 +17,6 @@ import { WhatsappAuthDto } from './dto/whatsapp-auth.dto';
 import { WhatsappWebhookService } from './services/whatsapp-webhook.service';
 import { WhatsappWebhookDto } from './interfaces/webhook.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { WhatsappService } from './whatsapp.service';
-import { SkipAuth } from 'src/common/decorators/skip-auth.decorator';
 import { Public } from 'src/common/guards/jwt-auth.guard';
 import { Logger } from '@nestjs/common';
 
@@ -30,7 +27,6 @@ export class WhatsappController {
   constructor(
     private readonly authService: WhatsappAuthService,
     private readonly webhookService: WhatsappWebhookService,
-    private readonly whatsappService: WhatsappService,
   ) {}
 
   @Post('auth')

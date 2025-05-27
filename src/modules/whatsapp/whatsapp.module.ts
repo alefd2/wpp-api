@@ -11,7 +11,6 @@ import { ChannelFactoryService } from './channel/channel-factory.service';
 import { PrismaService } from '../../prisma.service';
 import { MessageService } from './messages/message.service';
 import { MessageController } from './messages/message.controller';
-import { WhatsappMessageProcessor } from './processors/whatsapp-message.processor';
 import { ChannelController } from './channel/channel.controller';
 import { ChannelService } from './channel/channel.service';
 import { TicketService } from './tickets/ticket.service';
@@ -39,7 +38,6 @@ import { TicketController } from './tickets/ticket.controller';
     ChannelService,
     MessageService,
     PrismaService,
-    WhatsappMessageProcessor,
     TicketService,
   ],
   exports: [

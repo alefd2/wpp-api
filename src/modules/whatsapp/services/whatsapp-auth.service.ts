@@ -13,7 +13,6 @@ export class WhatsappAuthService {
 
   async authenticate(auth: WhatsappAuthDto, companyId: number) {
     try {
-      // Verificar se já existe credencial ativa para esta empresa
       const existingCredential = await this.prisma.whatsappCredential.findFirst(
         {
           where: {
@@ -39,15 +38,14 @@ export class WhatsappAuthService {
       const { access_token, token_type, expires_in } = fbResponse.data;
       const expiresAt = new Date(Date.now() + expires_in * 1000);
 
-      // Se existir uma credencial ativa, desativá-la
+      // Se existir uma credencial ativa, desativara
       if (existingCredential) {
         await this.prisma.whatsappCredential.update({
           where: { id: existingCredential.id },
           data: { active: false },
         });
       }
-
-      // Criar nova credencial
+      // Criar credencial nova
       const newCredential = await this.prisma.whatsappCredential.create({
         data: {
           companyId,
@@ -75,6 +73,7 @@ export class WhatsappAuthService {
     }
   }
 
+  /* não é usado */
   async getCompanyCredentials(companyId: number) {
     const credential = await this.prisma.whatsappCredential.findFirst({
       where: {

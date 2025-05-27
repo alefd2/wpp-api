@@ -60,6 +60,10 @@ GET {{baseUrl}}/auth/me
 Authorization: Bearer {{token}} 
 
 
+
+
+####################### Autenticação com Meta/Facebook e credenciais #######################
+
 ### 1. Autenticar com Meta/Facebook e salvar credenciais
 POST {{baseUrl}}/whatsapp/auth?companyId={{companyId}}
 Authorization: Bearer {{token}}

@@ -239,6 +239,9 @@ model WhatsappCredential {
   @@map("whatsapp_credentials")
 }
 
+/**
+ * TODO: REMOVER TABELA WHATSAPP -> ESTÁ DEPRECATED POIS JÁ USAMOS O CHANNEL
+ */
 model Whatsapp {
   id                   Int                 @id @default(autoincrement())
   name                 String

@@ -113,143 +113,6 @@ export class WhatsappWebhookService {
     }
   }
 
-  private async processMessage(message: WhatsAppMessage, metadata: any) {
-    try {
-      // Validação dos dados da mensagem
-      if (!message?.from || !message?.id || !metadata?.phone_number_id) {
-        throw new Error('Dados da mensagem incompletos');
-      }
-
-      // Encontrar ou criar o contato
-      const contact = await this.findOrCreateContact(message.from);
-
-      // Encontrar o canal pelo número do WhatsApp
-      const channel = await this.prisma.channel.findFirst({
-        where: {
-          fbNumberPhoneId: metadata.phone_number_id,
-          type: 'WHATSAPP_CLOUD',
-          active: true,
-        },
-        include: {
-          company: true,
-        },
-      });
-
-      if (!channel) {
-        throw new Error(
-          `Canal não encontrado para o número ${metadata.phone_number_id}`,
-        );
-      }
-
-      // Atualizar o contato com a empresa correta se necessário
-      if (contact.companyId !== channel.companyId) {
-        await this.prisma.contact.update({
-          where: { id: contact.id },
-          data: { companyId: channel.companyId },
-        });
-      }
-
-      // Extrair o conteúdo da mensagem
-      const content = this.extractMessageContent(message);
-
-      // Salvar a mensagem
-      const savedMessage = await this.prisma.message.create({
-        data: {
-          messageId: message.id,
-          channelId: channel.id,
-          from: message.from,
-          type: message.type,
-          content,
-          timestamp: new Date(parseInt(message.timestamp) * 1000),
-          status: 'RECEIVED',
-          direction: 'INBOUND',
-        },
-      });
-
-      this.logger.log(`Mensagem ${message.id} processada com sucesso`);
-      return {
-        success: true,
-        messageId: message.id,
-        savedMessageId: savedMessage.id,
-      };
-    } catch (error) {
-      this.logger.error(`Erro ao processar mensagem ${message?.id}:`, error);
-      throw error;
-    }
-  }
-
-  private async findOrCreateContact(phone: string) {
-    try {
-      const contact = await this.prisma.contact.findFirst({
-        where: { phone },
-      });
-
-      if (contact) {
-        return contact;
-      }
-
-      // Criar novo contato
-      return await this.prisma.contact.create({
-        data: {
-          name: `WhatsApp ${phone}`, // Nome mais descritivo
-          phone,
-          // A empresa será atualizada depois quando encontrarmos o canal
-          companyId: 1, // TODO: Remover este valor hardcoded
-        },
-      });
-    } catch (error) {
-      this.logger.error(`Erro ao processar contato ${phone}:`, error);
-      throw error;
-    }
-  }
-
-  private extractMessageContent(message: WhatsAppMessage): string {
-    try {
-      switch (message.type) {
-        case 'text':
-          return message.text?.body || '';
-
-        case 'image':
-          return JSON.stringify({
-            id: message.image?.id,
-            mime_type: message.image?.mime_type,
-            caption: message.image?.caption,
-          });
-
-        case 'document':
-          return JSON.stringify({
-            id: message.document?.id,
-            filename: message.document?.filename,
-            mime_type: message.document?.mime_type,
-            caption: message.document?.caption,
-          });
-
-        case 'audio':
-          return JSON.stringify({
-            id: message.audio?.id,
-            mime_type: message.audio?.mime_type,
-            voice: message.audio?.voice,
-          });
-
-        case 'video':
-          return JSON.stringify({
-            id: message.video?.id,
-            mime_type: message.video?.mime_type,
-            caption: message.video?.caption,
-          });
-
-        default:
-          return JSON.stringify(message);
-      }
-    } catch (error) {
-      this.logger.error(
-        `Erro ao extrair conteúdo da mensagem ${message?.id}:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
   async handleWebhook(body: any) {
     try {
       if (body.object !== 'whatsapp_business_account') {
@@ -356,6 +219,7 @@ export class WhatsappWebhookService {
     }
   }
 
+  /* stage 1° - processar webhook */
   private async processMessages(messages: any[]) {
     for (const message of messages) {
       try {
@@ -371,7 +235,7 @@ export class WhatsappWebhookService {
           this.logger.warn(`Canal não encontrado para mensagem ${message.id}`);
           continue;
         }
-
+        /* stage 2° - processar webhook */
         await this.messageService.processInboundMessage(message, channel.id);
       } catch (error) {
         this.logger.error(`Erro ao processar mensagem ${message.id}:`, error);
