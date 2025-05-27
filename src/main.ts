@@ -30,9 +30,6 @@ async function bootstrap() {
 
   app.enableCors();
 
-  // Servir arquivos estáticos
-  app.useStaticAssets(join(__dirname, '..', 'public'));
-
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
