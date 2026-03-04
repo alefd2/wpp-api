@@ -54,6 +54,8 @@ export class AbilityService {
           Resource.ContactObservation,
           Resource.Conversation,
           Resource.Report,
+          Resource.Dashboard,
+          Resource.Chatbot,
         ],
       );
 
@@ -71,6 +73,8 @@ export class AbilityService {
         Resource.MessageTemplate,
         Resource.User,
         Resource.ContactObservation,
+        Resource.Dashboard,
+        Resource.Chatbot,
       ]);
       can(
         [Action.Create, Action.Read, Action.Update],
@@ -87,6 +91,7 @@ export class AbilityService {
         Resource.Tag,
         Resource.QuickResponse,
         Resource.MessageTemplate,
+        Resource.Chatbot,
       ]);
       cannot(Action.Create, [
         Resource.Department,
@@ -94,6 +99,7 @@ export class AbilityService {
         Resource.Tag,
         Resource.QuickResponse,
         Resource.MessageTemplate,
+        Resource.Chatbot,
       ]);
     }
 

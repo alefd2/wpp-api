@@ -15,4 +15,6 @@ export enum Resource {
   Financial = 'financial',
   Conversation = 'conversation',
   Report = 'report',
+  Dashboard = 'dashboard',
+  Chatbot = 'chatbot',
 }
